@@ -2,6 +2,8 @@ package org.jellyfin.androidtv.ui.browsing;
 
 import org.jellyfin.androidtv.constant.ChangeTriggerType;
 import org.jellyfin.androidtv.constant.QueryType;
+import org.jellyfin.androidtv.data.querying.AlbumArtistsQuery;
+import org.jellyfin.androidtv.data.querying.SpecialsQuery;
 import org.jellyfin.androidtv.data.querying.ViewQuery;
 import org.jellyfin.apiclient.model.livetv.LiveTvChannelQuery;
 import org.jellyfin.apiclient.model.livetv.RecommendedProgramQuery;
@@ -15,6 +17,7 @@ import org.jellyfin.apiclient.model.querying.PersonsQuery;
 import org.jellyfin.apiclient.model.querying.SeasonQuery;
 import org.jellyfin.apiclient.model.querying.SimilarItemsQuery;
 import org.jellyfin.apiclient.model.querying.UpcomingEpisodesQuery;
+import org.jellyfin.sdk.model.api.request.GetResumeItemsRequest;
 
 public class BrowseRowDef {
     private String headerText;
@@ -32,7 +35,10 @@ public class BrowseRowDef {
     private SeriesTimerQuery seriesTimerQuery;
 
     private ArtistsQuery artistsQuery;
+    private AlbumArtistsQuery albumArtistsQuery;
     private SeasonQuery seasonQuery;
+    private GetResumeItemsRequest resumeQuery;
+    private SpecialsQuery specialsQuery;
     private QueryType queryType;
 
     private int chunkSize = 0;
@@ -79,9 +85,16 @@ public class BrowseRowDef {
         headerText = header;
         this.artistsQuery = query;
         this.chunkSize = chunkSize;
+        this.queryType = QueryType.Artists;
+        this.changeTriggers = changeTriggers;
+    }
+
+    public BrowseRowDef(String header, AlbumArtistsQuery query, int chunkSize, ChangeTriggerType[] changeTriggers) {
+        headerText = header;
+        this.albumArtistsQuery = query;
+        this.chunkSize = chunkSize;
         this.queryType = QueryType.AlbumArtists;
         this.changeTriggers = changeTriggers;
-
     }
 
     public BrowseRowDef(String header, NextUpQuery query) {
@@ -174,6 +187,22 @@ public class BrowseRowDef {
         this.queryType = QueryType.Views;
     }
 
+    public BrowseRowDef(String header, GetResumeItemsRequest query, int chunkSize, boolean preferParentThumb, boolean staticHeight, ChangeTriggerType[] changeTriggers) {
+        headerText = header;
+        this.resumeQuery = query;
+        this.chunkSize = chunkSize;
+        this.queryType = QueryType.Resume;
+        this.staticHeight = staticHeight;
+        this.preferParentThumb = preferParentThumb;
+        this.changeTriggers = changeTriggers;
+    }
+
+    public BrowseRowDef(String header, SpecialsQuery query) {
+        headerText = header;
+        this.specialsQuery = query;
+        this.queryType = QueryType.Specials;
+    }
+
     public int getChunkSize() {
         return chunkSize;
     }
@@ -227,8 +256,13 @@ public class BrowseRowDef {
     }
 
     public ArtistsQuery getArtistsQuery() { return artistsQuery; }
+    public AlbumArtistsQuery getAlbumArtistsQuery() { return albumArtistsQuery; }
 
     public SeriesTimerQuery getSeriesTimerQuery() { return seriesTimerQuery; }
+
+    public GetResumeItemsRequest getResumeQuery() { return resumeQuery; }
+
+    public SpecialsQuery getSpecialsQuery() { return specialsQuery; }
 
     public ChangeTriggerType[] getChangeTriggers() {
         return changeTriggers;

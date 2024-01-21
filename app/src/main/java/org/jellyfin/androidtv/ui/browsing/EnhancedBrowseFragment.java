@@ -30,6 +30,7 @@ import androidx.lifecycle.Lifecycle;
 import org.jellyfin.androidtv.R;
 import org.jellyfin.androidtv.constant.CustomMessage;
 import org.jellyfin.androidtv.constant.Extras;
+import org.jellyfin.androidtv.constant.ImageType;
 import org.jellyfin.androidtv.constant.LiveTvOption;
 import org.jellyfin.androidtv.constant.QueryType;
 import org.jellyfin.androidtv.data.model.DataRefreshService;
@@ -51,7 +52,7 @@ import org.jellyfin.androidtv.util.CoroutineUtils;
 import org.jellyfin.androidtv.util.InfoLayoutHelper;
 import org.jellyfin.androidtv.util.KeyProcessor;
 import org.jellyfin.androidtv.util.MarkdownRenderer;
-import org.jellyfin.androidtv.util.apiclient.EmptyLifecycleAwareResponse;
+import org.jellyfin.androidtv.util.apiclient.LifecycleAwareResponse;
 import org.jellyfin.androidtv.util.sdk.compat.FakeBaseItem;
 import org.jellyfin.androidtv.util.sdk.compat.JavaCompat;
 import org.jellyfin.sdk.model.api.BaseItemDto;
@@ -79,6 +80,7 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
     public static final int FAVSONGS = 9;
     protected static final int SCHEDULE = 10;
     protected static final int SERIES = 11;
+    protected static final int ALBUM_ARTISTS = 12;
     protected BaseItemDto mFolder;
     protected String itemTypeString;
     protected boolean showViews = true;
@@ -222,7 +224,7 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
         mCardPresenter = new CardPresenter(false, 140);
         ClassPresenterSelector ps = new ClassPresenterSelector();
         ps.addClassPresenter(BaseRowItem.class, mCardPresenter);
-        ps.addClassPresenter(GridButton.class, new GridButtonPresenter(false, 155, 140));
+        ps.addClassPresenter(GridButton.class, new GridButtonPresenter(155, 140));
 
         for (BrowseRowDef def : rows) {
             HeaderItem header = new HeaderItem(def.getHeaderText());
@@ -267,6 +269,9 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
                 case SeriesTimer:
                     rowAdapter = new ItemRowAdapter(requireContext(), def.getSeriesTimerQuery(), mCardPresenter, mRowsAdapter);
                     break;
+                case Specials:
+                    rowAdapter = new ItemRowAdapter(requireContext(), def.getSpecialsQuery(), new CardPresenter(true, ImageType.THUMB, 150), mRowsAdapter);
+                    break;
                 default:
                     rowAdapter = new ItemRowAdapter(requireContext(), def.getQuery(), def.getChunkSize(), def.getPreferParentThumb(), def.isStaticHeight(), ps, mRowsAdapter, def.getQueryType());
                     break;
@@ -294,14 +299,15 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
 
         switch (itemTypeString) {
             case "Movie":
-                gridRowAdapter.add(new GridButton(SUGGESTED, getString(R.string.lbl_suggested), R.drawable.tile_suggestions));
+                gridRowAdapter.add(new GridButton(SUGGESTED, getString(R.string.lbl_suggested)));
                 addStandardViewButtons(gridRowAdapter);
                 break;
 
             case "MusicAlbum":
-                gridRowAdapter.add(new GridButton(ALBUMS, getString(R.string.lbl_albums), R.drawable.tile_audio));
-                gridRowAdapter.add(new GridButton(ARTISTS, getString(R.string.lbl_artists), R.drawable.tile_artists));
-                gridRowAdapter.add(new GridButton(GENRES, getString(R.string.lbl_genres), R.drawable.tile_genres));
+                gridRowAdapter.add(new GridButton(ALBUMS, getString(R.string.lbl_albums)));
+                gridRowAdapter.add(new GridButton(ALBUM_ARTISTS, getString(R.string.lbl_album_artists)));
+                gridRowAdapter.add(new GridButton(ARTISTS, getString(R.string.lbl_artists)));
+                gridRowAdapter.add(new GridButton(GENRES, getString(R.string.lbl_genres)));
                 break;
 
             default:
@@ -313,11 +319,11 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
     }
 
     protected void addStandardViewButtons(ArrayObjectAdapter gridRowAdapter) {
-        gridRowAdapter.add(new GridButton(GRID, getString(R.string.lbl_all_items), R.drawable.tile_port_grid));
-        gridRowAdapter.add(new GridButton(BY_LETTER, getString(R.string.lbl_by_letter), R.drawable.tile_letters));
-        gridRowAdapter.add(new GridButton(GENRES, getString(R.string.lbl_genres), R.drawable.tile_genres));
+        gridRowAdapter.add(new GridButton(GRID, getString(R.string.lbl_all_items)));
+        gridRowAdapter.add(new GridButton(BY_LETTER, getString(R.string.lbl_by_letter)));
+        gridRowAdapter.add(new GridButton(GENRES, getString(R.string.lbl_genres)));
         // Disabled because the screen doesn't behave properly
-        // gridRowAdapter.add(new GridButton(PERSONS, getString(R.string.lbl_performers), R.drawable.tile_actors));
+        // gridRowAdapter.add(new GridButton(PERSONS, getString(R.string.lbl_performers)));
     }
 
     protected void setupEventListeners() {
@@ -347,13 +353,15 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
                 mCurrentItem.getBaseItemType() != BaseItemKind.MUSIC_ALBUM &&
                 mCurrentItem.getBaseItemType() != BaseItemKind.PLAYLIST
         ) {
-            mCurrentItem.refresh(new EmptyLifecycleAwareResponse(getLifecycle()) {
+            BaseRowItem item = mCurrentItem;
+            item.refresh(new LifecycleAwareResponse<BaseItemDto>(getLifecycle()) {
                 @Override
-                public void onResponse() {
+                public void onResponse(BaseItemDto response) {
                     if (!getActive()) return;
 
                     ItemRowAdapter adapter = (ItemRowAdapter) mCurrentRow.getAdapter();
-                    adapter.notifyItemRangeChanged(adapter.indexOf(mCurrentItem), 1);
+                    if (response == null) adapter.removeAt(adapter.indexOf(item), 1);
+					else adapter.notifyItemRangeChanged(adapter.indexOf(item), 1);
                 }
             });
         }
@@ -374,10 +382,16 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
                         navigationRepository.getValue().navigate(Destinations.INSTANCE.libraryBrowser(mFolder, "MusicAlbum"));
                         break;
 
-                    case ARTISTS:
+                    case ALBUM_ARTISTS:
                         mFolder = JavaCompat.copyWithDisplayPreferencesId(mFolder, mFolder.getId() + "AR");
 
                         navigationRepository.getValue().navigate(Destinations.INSTANCE.libraryBrowser(mFolder, "AlbumArtist"));
+                        break;
+
+                    case ARTISTS:
+                        mFolder = JavaCompat.copyWithDisplayPreferencesId(mFolder, mFolder.getId() + "AR");
+
+                        navigationRepository.getValue().navigate(Destinations.INSTANCE.libraryBrowser(mFolder, "Artist"));
                         break;
 
                     case BY_LETTER:
@@ -427,7 +441,7 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader, View.
         public void onItemClicked(final Presenter.ViewHolder itemViewHolder, Object item, RowPresenter.ViewHolder rowViewHolder, Row row) {
             if (!(item instanceof BaseRowItem)) return;
 
-            ItemLauncher.launch((BaseRowItem) item, (ItemRowAdapter) ((ListRow) row).getAdapter(), ((BaseRowItem) item).getIndex(), getActivity());
+            ItemLauncher.launch((BaseRowItem) item, (ItemRowAdapter) ((ListRow) row).getAdapter(), ((BaseRowItem) item).getIndex(), requireContext());
         }
     }
 

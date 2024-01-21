@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import org.jellyfin.androidtv.auth.model.AuthenticationStoreServer
@@ -47,6 +46,7 @@ interface ServerRepository {
 
 	companion object {
 		val minimumServerVersion = Jellyfin.minimumVersion.copy(build = null)
+		val recommendedServerVersion = Jellyfin.apiVersion.copy(build = null)
 	}
 }
 
@@ -83,12 +83,12 @@ class ServerRepositoryImpl(
 
 	// Mutating data
 	override fun addServer(address: String): Flow<ServerAdditionState> = flow {
-		Timber.d("Adding server %s", address)
+		Timber.i("Adding server %s", address)
 
 		emit(ConnectingState(address))
 
 		val addressCandidates = jellyfin.discovery.getAddressCandidates(address)
-		Timber.d("Found ${addressCandidates.size} candidates")
+		Timber.i("Found ${addressCandidates.size} candidates")
 
 		val goodRecommendations = mutableListOf<RecommendedServerInfo>()
 		val badRecommendations = mutableListOf<RecommendedServerInfo>()

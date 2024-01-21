@@ -69,7 +69,6 @@
     <string name="lbl_people">Особе</string>
     <string name="lbl_sd">СД</string>
     <string name="lbl_upcoming">Предстојећи</string>
-    <string name="lbl_because_you_watched">"Зато што сте гледали "</string>
     <string name="pref_authentication_cat">Аутентикација</string>
     <string name="pref_default_rating">Подразумевани тип оцене</string>
     <string name="lbl_tomatoes">Парадајзи</string>
@@ -300,7 +299,6 @@
     <string name="user_picker_disable_title">Онемогући</string>
     <string name="auto_sign_in">Аутоматско пријављивање</string>
     <string name="lbl_use_series_thumbnails">Дајте предност сличицама серије</string>
-    <string name="lbl_episode_marks">Само на епизодама</string>
     <string name="lbl_hide_unwatched_count">Сакриј бројчаник за неодгледано</string>
     <string name="pref_watched_indicator">Прикажи индикаторе за одгледано</string>
     <string name="login_help_description">Jellyfin захтева сервер за повезивање. Посетите нашу документацију на docs.jellyfin.org или скенирајте QR код да бисте започели са Jellyfin-ом.</string>
@@ -389,7 +387,6 @@
     <string name="who_is_watching">Ко гледа\?</string>
     <string name="no_user_warning">Не можемо пронаћи ниједног корисника!
 \nДодајте новог корисника притиском на дугме \"Додај корисника\".</string>
-    <string name="server_unsupported">Сервер мора бити ажуриран. Тренутна верзија је %1$s али апликација захтева %2$s или новију</string>
     <string name="welcome_content">Повежите се са вашим сервером да бисте започели.</string>
     <string name="welcome_title">Добродошли у Jellyfin!</string>
     <string name="saved_servers">Сачувани сервери</string>

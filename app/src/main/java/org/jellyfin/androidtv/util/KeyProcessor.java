@@ -17,6 +17,7 @@ import org.jellyfin.androidtv.ui.itemhandling.BaseRowType;
 import org.jellyfin.androidtv.ui.navigation.Destinations;
 import org.jellyfin.androidtv.ui.navigation.NavigationRepository;
 import org.jellyfin.androidtv.ui.playback.MediaManager;
+import org.jellyfin.androidtv.ui.playback.rewrite.RewriteMediaManager;
 import org.jellyfin.androidtv.util.apiclient.PlaybackHelper;
 import org.jellyfin.androidtv.util.sdk.BaseItemExtensionsKt;
 import org.jellyfin.androidtv.util.sdk.compat.FakeBaseItem;
@@ -60,11 +61,15 @@ public class KeyProcessor {
 
     public static boolean HandleKey(int key, BaseRowItem rowItem, Activity activity) {
         if (rowItem == null) return false;
+        MediaManager mediaManager = KoinJavaComponent.<MediaManager>get(MediaManager.class);
         switch (key) {
             case KeyEvent.KEYCODE_MEDIA_PLAY:
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                if (KoinJavaComponent.<MediaManager>get(MediaManager.class).isPlayingAudio() && (rowItem.getBaseRowType() != BaseRowType.BaseItem || rowItem.getBaseItemType() != BaseItemKind.PHOTO)) {
-                    KoinJavaComponent.<MediaManager>get(MediaManager.class).pauseAudio();
+                if (mediaManager.isPlayingAudio() && (rowItem.getBaseRowType() != BaseRowType.BaseItem || rowItem.getBaseItemType() != BaseItemKind.PHOTO)) {
+                    // Rewrite uses media sessions which the system automatically manipulates on key presses
+                    if (mediaManager instanceof RewriteMediaManager) return false;
+
+                    mediaManager.pauseAudio();
                     return true;
                 }
 
@@ -92,14 +97,14 @@ public class KeyProcessor {
                             case SERIES:
                             case SEASON:
                             case BOX_SET:
-                                createPlayMenu(rowItem.getBaseItem(), true, false, activity);
+                                createPlayMenu(rowItem.getBaseItem(), false, activity);
                                 return true;
                             case MUSIC_ALBUM:
                             case MUSIC_ARTIST:
-                                createPlayMenu(rowItem.getBaseItem(), true, true, activity);
+                                createPlayMenu(rowItem.getBaseItem(), true, activity);
                                 return true;
                             case PLAYLIST:
-                                createPlayMenu(rowItem.getBaseItem(), true, MediaType.Audio.equals(item.getMediaType()), activity);
+                                createPlayMenu(rowItem.getBaseItem(), MediaType.Audio.equals(item.getMediaType()), activity);
                                 return true;
                             case PHOTO:
                                 NavigationRepository navigationRepository = KoinJavaComponent.get(NavigationRepository.class);
@@ -116,23 +121,6 @@ public class KeyProcessor {
                         break;
                     case Chapter:
                         break;
-                    case SearchHint:
-                        switch (rowItem.getSearchHint().getType()) {
-                            case "Movie":
-                            case "Episode":
-                            case "TvChannel":
-                            case "Video":
-                            case "Program":
-                                // retrieve full item and play
-                                PlaybackHelper.retrieveAndPlay(rowItem.getItemId(), false, activity);
-                                return true;
-                            case "Series":
-                            case "Season":
-                            case "BoxSet":
-                                createPlayMenu(rowItem.getBaseItem(), true, false, activity);
-                                return true;
-                        }
-                        break;
                     case LiveTvChannel:
                     case LiveTvRecording:
                         // retrieve full item and play
@@ -146,8 +134,11 @@ public class KeyProcessor {
                         break;
                 }
 
-                if (KoinJavaComponent.<MediaManager>get(MediaManager.class).hasAudioQueueItems()) {
-                    KoinJavaComponent.<MediaManager>get(MediaManager.class).resumeAudio();
+                if (mediaManager.hasAudioQueueItems()) {
+                    // Rewrite uses media sessions which the system automatically manipulates on key presses
+                    if (mediaManager instanceof RewriteMediaManager) return false;
+
+                    mediaManager.resumeAudio();
                     return true;
                 }
 
@@ -182,8 +173,6 @@ public class KeyProcessor {
                     case Person:
                         break;
                     case Chapter:
-                        break;
-                    case SearchHint:
                         break;
                     case LiveTvChannel:
                         break;
@@ -289,7 +278,7 @@ public class KeyProcessor {
         return menu;
     }
 
-    private static void createPlayMenu(BaseItemDto item, boolean isFolder, boolean isMusic, Activity activity) {
+    private static void createPlayMenu(BaseItemDto item, boolean isMusic, Activity activity) {
         PopupMenu menu = new PopupMenu(activity, activity.getCurrentFocus(), Gravity.END);
         int order = 0;
         if (!isMusic && item.getType() != BaseItemKind.PLAYLIST) {

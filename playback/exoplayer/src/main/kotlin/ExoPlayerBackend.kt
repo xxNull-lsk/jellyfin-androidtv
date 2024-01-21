@@ -1,34 +1,71 @@
 package org.jellyfin.playback.exoplayer
 
+import android.app.ActivityManager
 import android.content.Context
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.DefaultRenderersFactory
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.PlaybackException
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
-import com.google.android.exoplayer2.video.VideoSize
+import androidx.annotation.OptIn
+import androidx.core.content.getSystemService
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.VideoSize
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.TsExtractor
 import org.jellyfin.playback.core.backend.BasePlayerBackend
 import org.jellyfin.playback.core.mediastream.MediaStream
+import org.jellyfin.playback.core.mediastream.PlayableMediaStream
 import org.jellyfin.playback.core.model.PlayState
 import org.jellyfin.playback.core.model.PositionInfo
+import org.jellyfin.playback.core.support.PlaySupportReport
+import org.jellyfin.playback.exoplayer.support.getPlaySupportReport
+import org.jellyfin.playback.exoplayer.support.toFormat
 import timber.log.Timber
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(UnstableApi::class)
 class ExoPlayerBackend(
 	private val context: Context,
 ) : BasePlayerBackend() {
-	private var currentStream: MediaStream? = null
+	companion object {
+		const val TS_SEARCH_BYTES_LM = TsExtractor.TS_PACKET_SIZE * 1800
+		const val TS_SEARCH_BYTES_HM = TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES
+	}
+
+	private var currentStream: PlayableMediaStream? = null
 
 	private val exoPlayer by lazy {
-		val renderersFactory = DefaultRenderersFactory(context).apply {
-			setEnableDecoderFallback(true)
-			setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
-		}
-		ExoPlayer.Builder(context, renderersFactory)
+		ExoPlayer.Builder(context)
+			.setRenderersFactory(DefaultRenderersFactory(context).apply {
+				setEnableDecoderFallback(true)
+				setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+			})
+			.setTrackSelector(DefaultTrackSelector(context).apply {
+				setParameters(buildUponParameters().apply {
+					setTunnelingEnabled(true)
+					setAudioOffloadPreferences(TrackSelectionParameters.AudioOffloadPreferences.DEFAULT.buildUpon().apply {
+						setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
+					}.build())
+				})
+			})
+			.setMediaSourceFactory(DefaultMediaSourceFactory(
+				context,
+				DefaultExtractorsFactory().apply {
+					val isLowRamDevice = context.getSystemService<ActivityManager>()?.isLowRamDevice == true
+					setTsExtractorTimestampSearchBytes(when (isLowRamDevice) {
+						true -> TS_SEARCH_BYTES_LM
+						false -> TS_SEARCH_BYTES_HM
+					})
+				}
+			))
+			.setPauseAtEndOfMediaItems(true)
 			.build()
 			.also { player -> player.addListener(PlayerListener()) }
 	}
@@ -55,15 +92,18 @@ class ExoPlayerBackend(
 			onIsPlayingChanged(exoPlayer.isPlaying)
 		}
 
-		override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-			if (reason == MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-				val stream = mediaItem?.localConfiguration?.tag as? MediaStream
-				if (stream != currentStream) listener?.onMediaStreamEnd(requireNotNull(stream))
+		override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+			if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {
+				listener?.onMediaStreamEnd(requireNotNull(currentStream))
 			}
 		}
 	}
 
-	override fun prepareStream(stream: MediaStream) {
+	override fun supportsStream(
+		stream: MediaStream
+	): PlaySupportReport = exoPlayer.getPlaySupportReport(stream.toFormat())
+
+	override fun prepareStream(stream: PlayableMediaStream) {
 		val mediaItem = MediaItem.Builder().apply {
 			setTag(stream)
 			setMediaId(stream.hashCode().toString())
@@ -78,7 +118,7 @@ class ExoPlayerBackend(
 		exoPlayer.prepare()
 	}
 
-	override fun playStream(stream: MediaStream) {
+	override fun playStream(stream: PlayableMediaStream) {
 		if (currentStream == stream) return
 
 		currentStream = stream
@@ -90,6 +130,7 @@ class ExoPlayerBackend(
 
 		if (!streamIsPrepared) prepareStream(stream)
 
+		exoPlayer.seekToNextMediaItem()
 		exoPlayer.play()
 	}
 

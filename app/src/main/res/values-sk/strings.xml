@@ -10,7 +10,7 @@
     <string name="lbl_movies">Filmy</string>
     <string name="lbl_favorites">Obľúbené</string>
     <string name="lbl_by_name">Podľa mena</string>
-    <string name="lbl_latest">Najnovšie</string>
+    <string name="lbl_latest">Najnovšie pridané</string>
     <string name="lbl_search">Vyhľadávanie</string>
     <string name="lbl_genres">Žánre</string>
     <string name="lbl_next_up">Nasleduje</string>
@@ -106,7 +106,6 @@
     <string name="lbl_cancel">Zrušiť</string>
     <string name="lbl_play">Prehrať</string>
     <string name="lbl_shuffle_all">Zamiešať všetko</string>
-    <string name="lbl_because_you_watched">"Pretože ste pozerali "</string>
     <string name="lbl_collections">Kolekcie</string>
     <string name="lbl_other_channels">Ostatné kanály</string>
     <string name="lbl_favorite_channels">Obľúbené kanály</string>
@@ -328,11 +327,9 @@
     <string name="auto_sign_in">Automatické prihlásenie</string>
     <string name="lbl_use_series_thumbnails_description">Použiť seriálové thumbnaily počas zobrazenia epizód</string>
     <string name="lbl_use_series_thumbnails">Preferovať seriálové thumbnaily</string>
-    <string name="lbl_episode_marks">Iba pri epizódach</string>
     <string name="lbl_hide_unwatched_count">Skryť počet nepozretých</string>
     <string name="pref_watched_indicator">Zobraziť indikátor pozretia</string>
     <string name="press_to_close">Stlačením zavriete</string>
-    <string name="server_unsupported">Server je nutné aktualizovať. Súčasná verzia je %1$s a aplikácia vyžaduje verziu %2$s alebo novšiu</string>
     <string name="lbl_starting_on_schedule_ending_after">Začína načas a končí o %1$s neskôr</string>
     <string name="lbl_start_end_on_schedule">Začína načas a končí načas</string>
     <string name="lbl_starting_early_ending_on_schedule">Začína o %1$s skôr a končí načas</string>
@@ -387,7 +384,7 @@
     <string name="home_section_resume">Pokračovať v pozeraní</string>
     <string name="home_section_library_small">Moje médiá (malé)</string>
     <string name="home_section_library">Moje médiá</string>
-    <string name="home_section_latest_media">Najnovšie médiá</string>
+    <string name="home_section_latest_media">Najnovšie pridané médiá</string>
     <string name="home_sections">Sekcie obrazovky Domov</string>
     <string name="home_prefs">Domov</string>
     <string name="searchable_settings_description">Médiá</string>
@@ -398,7 +395,7 @@
     <string name="pref_next_up_timeout_disabled">∞</string>
     <string name="server_issue_ssl_handshake">Spojenie SSL zlyhalo</string>
     <string name="server_issue_timeout">Čas pre pripojenie vypršal</string>
-    <string name="server_issue_outdated_version">Server používa verziu %1$s, potrebná je však verzia %2$s alebo novšia</string>
+    <string name="server_issue_outdated_version">Verzia serveru %1$s už nie je podporovaná. Aktualizujte server na verziu %2$s alebo novšiu</string>
     <string name="server_issue_unsupported_version">Server používa verziu %1$s, ktorá nie je podporovaná</string>
     <string name="server_issue_missing_version">Nebolo možné určiť verziu serveru</string>
     <string name="server_issue_invalid_product">Serverový softvér nie je kompatibilný</string>
@@ -443,7 +440,7 @@
     <string name="lbl_subtitle_delay">Oneskorenie tituliek</string>
     <string name="lbl_adjust">Upraviť</string>
     <string name="live_tv_preferences">Nastavenia pre živú TV</string>
-    <string name="server_unsupported_notification">Tento server používa Jellyfin verziu %1$s, ktorá je nepodporovaná. Prosím, aktualizujte Jellyfin na verziu %2$s aby ste mohli naďalej používať túto appku.</string>
+    <string name="server_unsupported_notification">Tento server používa Jellyfin verziu %1$s, ktorá už nie je podporovaná. Prosím, aktualizujte Jellyfin na verziu %2$s alebo novšiu aby ste mohli naďalej používať túto aplikáciu.</string>
     <string name="app_notification_uimode_invalid">Táto aplikácia je optimalizovaná pre televízory. Na iných zariadeniach odporúčame používať našu mobilnú aplikáciu.</string>
     <string name="image_size_xlarge">Extra veľké</string>
     <string name="image_size_smallest">Najmenšie</string>
@@ -512,5 +509,16 @@
         <item quantity="few">%1$s hodinách</item>
         <item quantity="other">%1$s hodinách</item>
     </plurals>
-    <string name="lbl_latest_in">Najnovšie v %1$s</string>
+    <string name="lbl_latest_in">Najnovšie pridané v %1$s</string>
+    <string name="not_set">Nie je nastavené</string>
+    <string name="lbl_album_artists">Album interpretov</string>
+    <string name="enable_reactive_homepage">Povoliť reaktívnu domovskú stránku</string>
+    <string name="pref_music_rewrite_enable_description">Zakážte iba v prípade problémov s prehrávaním hudby</string>
+    <string name="pref_music_cat">Hudba</string>
+    <string name="pref_music_rewrite_disable">Zakázať nový prehrávač hudby</string>
+    <string name="disable_ui_mode_warning">Zakázať upozornenia na typ zariadenia</string>
+    <string name="because_you_watched">Pretože ste pozerali %1$s</string>
+    <string name="channels">Kanály</string>
+    <string name="photo_albums">Fotoalbumy</string>
+    <string name="photos">Fotky</string>
 </resources>

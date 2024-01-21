@@ -1,39 +1,39 @@
 package org.jellyfin.androidtv.ui.home
 
 import android.content.Intent
-import android.graphics.PorterDuff
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.transition.Transition
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.repository.SessionRepository
 import org.jellyfin.androidtv.auth.repository.UserRepository
 import org.jellyfin.androidtv.databinding.FragmentHomeBinding
 import org.jellyfin.androidtv.ui.navigation.Destinations
 import org.jellyfin.androidtv.ui.navigation.NavigationRepository
+import org.jellyfin.androidtv.ui.playback.MediaManager
 import org.jellyfin.androidtv.ui.startup.StartupActivity
 import org.jellyfin.androidtv.util.ImageUtils
 import org.koin.android.ext.android.inject
 
-class HomeFragment : Fragment(R.layout.fragment_home) {
-	private lateinit var binding: FragmentHomeBinding
+class HomeFragment : Fragment() {
+	private var _binding: FragmentHomeBinding? = null
+	private val binding get() = _binding!!
+
 	private val sessionRepository by inject<SessionRepository>()
 	private val userRepository by inject<UserRepository>()
 	private val navigationRepository by inject<NavigationRepository>()
+	private val mediaManager by inject<MediaManager>()
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		binding = FragmentHomeBinding.inflate(inflater, container, false)
+		_binding = FragmentHomeBinding.inflate(inflater, container, false)
 
 		binding.settings.setOnClickListener {
 			navigationRepository.navigate(Destinations.userPreferences)
@@ -53,43 +53,26 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
-		viewLifecycleOwner.lifecycleScope.launch {
-			viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-				userRepository.currentUser.collect { user ->
-					if (user != null) {
-						val image = ImageUtils.getPrimaryImageUrl(user)
-						setUserImage(image)
-					}
+		userRepository.currentUser
+			.flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+			.onEach { user ->
+				if (user != null) {
+					binding.switchUsersImage.load(
+						url = ImageUtils.getPrimaryImageUrl(user),
+						placeholder = ContextCompat.getDrawable(requireContext(), R.drawable.ic_user)
+					)
 				}
-			}
-		}
+			}.launchIn(viewLifecycleOwner.lifecycleScope)
 	}
 
-	private fun setUserImage(image: String?) {
-		Glide.with(requireContext())
-			.load(image)
-			.placeholder(R.drawable.ic_switch_users)
-			.centerInside()
-			.circleCrop()
-			.into(object : CustomViewTarget<ImageButton, Drawable>(binding.switchUsers) {
-				override fun onLoadFailed(errorDrawable: Drawable?) {
-					binding.switchUsers.imageTintMode = PorterDuff.Mode.SRC_IN
-					binding.switchUsers.setImageDrawable(errorDrawable)
-				}
+	override fun onDestroyView() {
+		super.onDestroyView()
 
-				override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-					binding.switchUsers.imageTintMode = null
-					binding.switchUsers.setImageDrawable(resource)
-				}
-
-				override fun onResourceCleared(placeholder: Drawable?) {
-					binding.switchUsers.imageTintMode = PorterDuff.Mode.SRC_IN
-					binding.switchUsers.setImageDrawable(placeholder)
-				}
-			})
+		_binding = null
 	}
 
 	private fun switchUser() {
+		mediaManager.clearAudioQueue()
 		sessionRepository.destroyCurrentSession()
 
 		// Open login activity

@@ -46,6 +46,7 @@ import org.jellyfin.androidtv.ui.navigation.NavigationRepository;
 import org.jellyfin.androidtv.util.CoroutineUtils;
 import org.jellyfin.androidtv.util.ImageUtils;
 import org.jellyfin.androidtv.util.InfoLayoutHelper;
+import org.jellyfin.androidtv.util.TextUtilsKt;
 import org.jellyfin.androidtv.util.TimeUtils;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.androidtv.util.apiclient.EmptyLifecycleAwareResponse;
@@ -333,7 +334,7 @@ public class LiveTvGuideFragment extends Fragment implements LiveTvGuide, View.O
                     Date curUTC = TimeUtils.convertToUtcDate(new Date());
                     if (mSelectedProgramView instanceof ProgramGridCell) {
                         if (mSelectedProgram.getStartDate().before(curUTC))
-                            PlaybackHelper.retrieveAndPlay(mSelectedProgram.getChannelId(), false, requireActivity());
+                            PlaybackHelper.retrieveAndPlay(mSelectedProgram.getChannelId(), false, requireContext());
                         else
                             showProgramOptions();
                         return true;
@@ -346,7 +347,7 @@ public class LiveTvGuideFragment extends Fragment implements LiveTvGuide, View.O
                         && mSelectedProgram != null
                         && mSelectedProgram.getChannelId() != null) {
                     // tune to the current channel
-                    PlaybackHelper.retrieveAndPlay(mSelectedProgram.getChannelId(), false, requireActivity());
+                    PlaybackHelper.retrieveAndPlay(mSelectedProgram.getChannelId(), false, requireContext());
                     return true;
                 }
 
@@ -541,7 +542,8 @@ public class LiveTvGuideFragment extends Fragment implements LiveTvGuide, View.O
                 mChannels.addView(placeHolder);
                 displayedChannels = 0;
 
-                mProgramRows.addView(new GuidePagingButton(requireActivity(), LiveTvGuideFragment.this, pageUpStart, getString(R.string.lbl_load_channels)+mAllChannels.get(pageUpStart).getNumber() + " - "+mAllChannels.get(mCurrentDisplayChannelStartNdx-1).getNumber()));
+                String label = TextUtilsKt.getLoadChannelsLabel(requireContext(), mAllChannels.get(pageUpStart).getNumber(), mAllChannels.get(mCurrentDisplayChannelStartNdx - 1).getNumber());
+                mProgramRows.addView(new GuidePagingButton(requireContext(), LiveTvGuideFragment.this, pageUpStart, label));
             }
         }
 
@@ -609,7 +611,8 @@ public class LiveTvGuideFragment extends Fragment implements LiveTvGuide, View.O
                 placeHolder.setHeight(guideRowHeightPx);
                 mChannels.addView(placeHolder);
 
-                mProgramRows.addView(new GuidePagingButton(requireActivity(), LiveTvGuideFragment.this, mCurrentDisplayChannelEndNdx + 1, getString(R.string.lbl_load_channels)+mAllChannels.get(mCurrentDisplayChannelEndNdx+1).getNumber() + " - "+mAllChannels.get(pageDnEnd).getNumber()));
+                String label = TextUtilsKt.getLoadChannelsLabel(requireContext(), mAllChannels.get(mCurrentDisplayChannelEndNdx + 1).getNumber(), mAllChannels.get(pageDnEnd).getNumber());
+                mProgramRows.addView(new GuidePagingButton(requireContext(), LiveTvGuideFragment.this, mCurrentDisplayChannelEndNdx + 1, label));
             }
 
             mChannelStatus.setText(displayedChannels+" of "+mAllChannels.size()+" channels");

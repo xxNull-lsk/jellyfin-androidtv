@@ -7,20 +7,27 @@ sealed interface NavigationAction {
 	/**
 	 * Navigate to the fragment in [destination].
 	 */
-	data class NavigateFragment(val destination: Destination.Fragment, val addToBackStack: Boolean) : NavigationAction
+	data class NavigateFragment(
+		val destination: Destination.Fragment,
+		val addToBackStack: Boolean,
+		val replace: Boolean,
+	) : NavigationAction
 
 	/**
 	 * Open the activity in [destination] and immediatly call [onOpened] to clear the emitted state.
 	 */
-	data class NavigateActivity(val destination: Destination.Activity, val onOpened: () -> Unit) : NavigationAction
+	data class NavigateActivity(
+		val destination: Destination.Activity,
+		val onOpened: () -> Unit,
+	) : NavigationAction
 
 	/**
 	 * Go back to the previous fragment manager state.
 	 */
-	object GoBack : NavigationAction
+	data object GoBack : NavigationAction
 
 	/**
 	 * Do nothing.
 	 */
-	object Nothing : NavigationAction
+	data object Nothing : NavigationAction
 }

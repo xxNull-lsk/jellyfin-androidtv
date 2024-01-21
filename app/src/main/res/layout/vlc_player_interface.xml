@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:keepScreenOn="true">
+    android:background="@color/black">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -31,7 +31,7 @@
 
         </FrameLayout>
 
-        <com.google.android.exoplayer2.ui.PlayerView
+        <androidx.media3.ui.PlayerView
             android:id="@+id/exoPlayerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -91,17 +91,17 @@
             android:id="@+id/item_logo"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
-            android:layout_marginBottom="2dp"
             android:layout_centerInParent="true"
             android:layout_centerVertical="true"
+            android:layout_marginBottom="2dp"
             android:contentDescription="@null"
             android:foregroundGravity="fill_horizontal"
             android:scaleType="fitCenter"
-            app:layout_constraintWidth_max="450dp"
             app:layout_constraintEnd_toStartOf="@id/textClock"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintHorizontal_bias="0.0" />
+            app:layout_constraintWidth_max="450dp" />
 
         <TextView
             android:id="@+id/item_title"
@@ -111,9 +111,9 @@
             android:textColor="@color/white"
             android:textSize="32sp"
             app:layout_constraintEnd_toStartOf="@id/textClock"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/item_logo"
-            app:layout_constraintHorizontal_bias="0.0"
             tools:text="Title" />
 
         <TextView
@@ -123,9 +123,9 @@
             android:textColor="@color/white"
             android:textSize="20sp"
             app:layout_constraintEnd_toStartOf="@id/textClock"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/item_title"
-            app:layout_constraintHorizontal_bias="0.0"
             tools:text="Subtitle" />
 
         <org.jellyfin.androidtv.ui.ClockUserView

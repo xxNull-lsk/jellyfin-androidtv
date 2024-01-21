@@ -10,7 +10,8 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.model.UnavailableQuickConnectState
 import org.jellyfin.androidtv.data.service.BackgroundService
@@ -30,7 +31,8 @@ class UserLoginFragment : Fragment() {
 
 	private val userLoginViewModel: UserLoginViewModel by activityViewModel()
 	private val backgroundService: BackgroundService by inject()
-	private lateinit var binding: FragmentUserLoginBinding
+	private var _binding: FragmentUserLoginBinding? = null
+	private val binding get() = _binding!!
 
 	private val usernameArgument get() = arguments?.getString(ARG_USERNAME)?.ifBlank { null }
 	private val serverIdArgument get() = arguments?.getString(ARG_SERVER_ID)?.ifBlank { null }
@@ -44,7 +46,7 @@ class UserLoginFragment : Fragment() {
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		binding = FragmentUserLoginBinding.inflate(inflater, container, false)
+		_binding = FragmentUserLoginBinding.inflate(inflater, container, false)
 
 		binding.cancel.setOnClickListener { parentFragmentManager.popBackStack() }
 		binding.useCredentials.setOnClickListener { setLoginMethod<UserLoginCredentialsFragment>() }
@@ -63,23 +65,25 @@ class UserLoginFragment : Fragment() {
 		else setLoginMethod<UserLoginQuickConnectFragment>()
 
 		// Update "connecting to ..." text and background
-		lifecycleScope.launch {
-			userLoginViewModel.server.collect { server ->
-				val name = server?.name ?: "Jellyfin"
-				binding.subtitle.text = getString(R.string.login_connect_to, name)
+		userLoginViewModel.server.onEach { server ->
+			val name = server?.name ?: "Jellyfin"
+			binding.subtitle.text = getString(R.string.login_connect_to, name)
 
-				if (server != null) backgroundService.setBackground(server)
-				else backgroundService.clearBackgrounds()
-			}
-		}
+			if (server != null) backgroundService.setBackground(server)
+			else backgroundService.clearBackgrounds()
+		}.launchIn(lifecycleScope)
 
 		// Disable QuickConnect when unavailable
-		lifecycleScope.launch {
-			userLoginViewModel.quickConnectState.collect { state ->
-				binding.useQuickconnect.isEnabled = state != UnavailableQuickConnectState
-				if (state == UnavailableQuickConnectState) setLoginMethod<UserLoginCredentialsFragment>()
-			}
-		}
+		userLoginViewModel.quickConnectState.onEach { state ->
+			binding.useQuickconnect.isEnabled = state != UnavailableQuickConnectState
+			if (state == UnavailableQuickConnectState) setLoginMethod<UserLoginCredentialsFragment>()
+		}.launchIn(lifecycleScope)
+	}
+
+	override fun onDestroyView() {
+		super.onDestroyView()
+
+		_binding = null
 	}
 
 	private inline fun <reified T : Fragment> setLoginMethod() {

@@ -129,6 +129,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
     private int BUTTON_SIZE;
 
     private TextUnderButton mResumeButton;
+    private TextUnderButton mVersionsButton;
     private TextUnderButton mPrevButton;
     private TextUnderButton mRecordButton;
     private TextUnderButton mRecSeriesButton;
@@ -155,22 +156,20 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
     private Handler mLoopHandler = new Handler();
     private Runnable mClockLoop;
 
-    private BaseItemDto mBaseItem;
+    BaseItemDto mBaseItem;
 
     private ArrayList<MediaSourceInfo> versions;
-    private int selectedVersionPopupIndex = 0;
-
     private Lazy<ApiClient> apiClient = inject(ApiClient.class);
     private Lazy<org.jellyfin.sdk.api.client.ApiClient> api = inject(org.jellyfin.sdk.api.client.ApiClient.class);
     private Lazy<UserPreferences> userPreferences = inject(UserPreferences.class);
-    private Lazy<SystemPreferences> systemPreferences = inject(SystemPreferences.class);
+    Lazy<SystemPreferences> systemPreferences = inject(SystemPreferences.class);
     private Lazy<DataRefreshService> dataRefreshService = inject(DataRefreshService.class);
     private Lazy<BackgroundService> backgroundService = inject(BackgroundService.class);
-    private Lazy<MediaManager> mediaManager = inject(MediaManager.class);
-    private Lazy<VideoQueueManager> videoQueueManager = inject(VideoQueueManager.class);
+    Lazy<MediaManager> mediaManager = inject(MediaManager.class);
+    Lazy<VideoQueueManager> videoQueueManager = inject(VideoQueueManager.class);
     private Lazy<MarkdownRenderer> markdownRenderer = inject(MarkdownRenderer.class);
     private final Lazy<CustomMessageRepository> customMessageRepository = inject(CustomMessageRepository.class);
-    private final Lazy<NavigationRepository> navigationRepository = inject(NavigationRepository.class);
+    final Lazy<NavigationRepository> navigationRepository = inject(NavigationRepository.class);
 
     @Nullable
     @Override
@@ -183,7 +182,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         requireActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
 
         mRowsFragment = new RowsSupportFragment();
-        requireActivity().getSupportFragmentManager().beginTransaction().add(R.id.rowsFragment, mRowsFragment).commit();
+        getChildFragmentManager().beginTransaction().replace(R.id.rowsFragment, mRowsFragment).commit();
 
         mRowsFragment.setOnItemViewClickedListener(new ItemViewClickedListener());
         mRowsFragment.setOnItemViewSelectedListener(new ItemViewSelectedListener());
@@ -292,9 +291,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                                     }
                                     showMoreButtonIfNeeded();
                                 }
-                                updatePlayedDate();
                                 updateWatched();
-                                //updatePoster();
                                 mLastUpdated = Calendar.getInstance();
                             }
                         });
@@ -451,7 +448,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
 
             String primaryImageUrl = ImageUtils.getLogoImageUrl(ModelCompat.asSdk(mBaseItem), 600, true);
             if (primaryImageUrl == null) {
-                primaryImageUrl = ImageUtils.getPrimaryImageUrl(ModelCompat.asSdk(mBaseItem), false, posterHeight);
+                primaryImageUrl = ImageUtils.getPrimaryImageUrl(ModelCompat.asSdk(mBaseItem), false, null, posterHeight);
                 if (item.getRunTimeTicks() != null && item.getRunTimeTicks() > 0 && item.getUserData() != null && item.getUserData().getPlaybackPositionTicks() > 0)
                     mDetailsOverviewRow.setProgress(((int) (item.getUserData().getPlaybackPositionTicks() * 100.0 / item.getRunTimeTicks())));
             }
@@ -691,6 +688,11 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                 ItemRowAdapter seasonsAdapter = new ItemRowAdapter(requireContext(), seasons, new CardPresenter(), adapter);
                 addItemRow(adapter, seasonsAdapter, 1, getString(R.string.lbl_seasons));
 
+                //Specials
+                if (mBaseItem.getSpecialFeatureCount() != null && mBaseItem.getSpecialFeatureCount() > 0) {
+                    addItemRow(adapter, new ItemRowAdapter(requireContext(), new SpecialsQuery(mBaseItem.getId()), new CardPresenter(), adapter), 3, getString(R.string.lbl_specials));
+                }
+
                 UpcomingEpisodesQuery upcoming = new UpcomingEpisodesQuery();
                 upcoming.setUserId(KoinJavaComponent.<UserRepository>get(UserRepository.class).getCurrentUser().getValue().getId().toString());
                 upcoming.setParentId(mBaseItem.getId());
@@ -782,7 +784,6 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
 
     private void updateInfo(org.jellyfin.sdk.model.api.BaseItemDto item) {
         if (buttonTypeList.contains(item.getType())) addButtons(BUTTON_SIZE);
-//        updatePlayedDate();
 
         mLastUpdated = Calendar.getInstance();
     }
@@ -791,17 +792,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         mDorPresenter.getViewHolder().setTitle(title);
     }
 
-    private void updatePlayedDate() {
-//        if (directPlayableTypeList.contains(mBaseItem.getType())) {
-//            mLastPlayedText.setText(mBaseItem.getUserData() != null && mBaseItem.getUserData().getLastPlayedDate() != null ?
-//                    getString(R.string.lbl_last_played)+ DateUtils.getRelativeTimeSpanString(Utils.convertToLocalDate(mBaseItem.getUserData().getLastPlayedDate()).getTime()).toString()
-//                    : getString(R.string.lbl_never_played));
-//        } else {
-//            mLastPlayedText.setText("");
-//        }
-    }
-
-    private void playTrailers() {
+    void playTrailers() {
         // External trailer
         if (mBaseItem.getLocalTrailerCount() == null || mBaseItem.getLocalTrailerCount() < 1) {
             Intent intent = TrailerUtils.getExternalTrailerIntent(requireContext(), ModelCompat.asSdk(mBaseItem));
@@ -855,7 +846,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         return "";
     }
 
-    private void addItemToQueue() {
+    void addItemToQueue() {
         org.jellyfin.sdk.model.api.BaseItemDto baseItem = ModelCompat.asSdk(mBaseItem);
         if (baseItem.getType() == BaseItemKind.AUDIO || baseItem.getType() == BaseItemKind.MUSIC_ALBUM || baseItem.getType() == BaseItemKind.MUSIC_ARTIST) {
             if (baseItem.getType() == BaseItemKind.MUSIC_ALBUM || baseItem.getType() == BaseItemKind.MUSIC_ARTIST) {
@@ -873,7 +864,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         }
     }
 
-    private void toggleFavorite() {
+    void toggleFavorite() {
         UserItemDataDto data = mBaseItem.getUserData();
         apiClient.getValue().UpdateFavoriteStatusAsync(mBaseItem.getId(), KoinJavaComponent.<UserRepository>get(UserRepository.class).getCurrentUser().getValue().getId().toString(), !data.getIsFavorite(), new LifecycleAwareResponse<UserItemDataDto>(getLifecycle()) {
             @Override
@@ -887,7 +878,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         });
     }
 
-    private void gotoSeries() {
+    void gotoSeries() {
         navigationRepository.getValue().navigate(Destinations.INSTANCE.itemDetails(UUIDSerializerKt.toUUID(mBaseItem.getSeriesId())));
     }
 
@@ -909,14 +900,14 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                 .show();
     }
 
-    private TextUnderButton favButton = null;
-    private TextUnderButton shuffleButton = null;
-    private TextUnderButton goToSeriesButton = null;
-    private TextUnderButton queueButton = null;
-    private TextUnderButton deleteButton = null;
-    private TextUnderButton moreButton;
-    private TextUnderButton playButton = null;
-    private TextUnderButton trailerButton = null;
+    TextUnderButton favButton = null;
+    TextUnderButton shuffleButton = null;
+    TextUnderButton goToSeriesButton = null;
+    TextUnderButton queueButton = null;
+    TextUnderButton deleteButton = null;
+    TextUnderButton moreButton;
+    TextUnderButton playButton = null;
+    TextUnderButton trailerButton = null;
 
     private void addButtons(int buttonSize) {
         org.jellyfin.sdk.model.api.BaseItemDto baseItem = ModelCompat.asSdk(mBaseItem);
@@ -972,10 +963,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
             playButton = TextUnderButton.create(requireContext(), R.drawable.ic_play, buttonSize, 3, getString(R.string.play_with), new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    PopupMenu more = new PopupMenu(requireContext(), view);
-                    more.inflate(R.menu.menu_details_play_with);
-                    more.setOnMenuItemClickListener(playWithMenuListener);
-                    more.show();
+                    FullDetailsFragmentHelperKt.showPlayWithMenu(FullDetailsFragment.this, view, false);
                 }
             });
             mDetailsOverviewRow.addAction(playButton);
@@ -984,10 +972,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                 shuffleButton = TextUnderButton.create(requireContext(), R.drawable.ic_shuffle, buttonSize, 2, getString(R.string.lbl_shuffle_all), new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        PopupMenu more = new PopupMenu(requireContext(), view);
-                        more.inflate(R.menu.menu_details_play_with);
-                        more.setOnMenuItemClickListener(shuffleWithMenuListener);
-                        more.show();
+                        FullDetailsFragmentHelperKt.showPlayWithMenu(FullDetailsFragment.this, view, true);
                     }
                 });
                 mDetailsOverviewRow.addAction(shuffleButton);
@@ -1052,7 +1037,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         }
         //Video versions button
         if (mBaseItem.getMediaSources() != null && mBaseItem.getMediaSources().size() > 1) {
-            TextUnderButton versionsButton = TextUnderButton.create(requireContext(), R.drawable.ic_guide, buttonSize, 0, getString(R.string.select_version), new View.OnClickListener() {
+            mVersionsButton = TextUnderButton.create(requireContext(), R.drawable.ic_guide, buttonSize, 0, getString(R.string.select_version), new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (versions != null ) {
@@ -1063,7 +1048,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                     }
                 }
             });
-            mDetailsOverviewRow.addAction(versionsButton);
+            mDetailsOverviewRow.addAction(mVersionsButton);
         }
 
         if (TrailerUtils.hasPlayableTrailers(requireContext(), ModelCompat.asSdk(mBaseItem))) {
@@ -1359,7 +1344,11 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
 
                                             Utils.showToast(requireContext(), mSeriesTimerInfo.getName() + " Canceled");
                                             dataRefreshService.getValue().setLastDeletedItemId(UUIDSerializerKt.toUUID(mSeriesTimerInfo.getId()));
-                                            requireActivity().finish();
+                                            if (navigationRepository.getValue().getCanGoBack()) {
+                                                navigationRepository.getValue().goBack();
+                                            } else {
+                                                navigationRepository.getValue().reset(Destinations.INSTANCE.getHome());
+                                            }
                                         }
 
                                         @Override
@@ -1384,49 +1373,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
         moreButton = TextUnderButton.create(requireContext(), R.drawable.ic_more, buttonSize, 0, getString(R.string.lbl_other_options), new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //show popup
-                PopupMenu more = new PopupMenu(requireContext(), v);
-                more.inflate(R.menu.menu_details_more);
-                more.setOnMenuItemClickListener(moreMenuListener);
-
-                if (queueButton == null || ViewKt.isVisible(queueButton)) {
-                    more.getMenu().getItem(0).setVisible(false);
-                } else if (queueButton != null) {
-                    more.getMenu().getItem(0).setVisible(true);
-                }
-
-                if (shuffleButton == null || ViewKt.isVisible(shuffleButton)) {
-                    more.getMenu().getItem(1).setVisible(false);
-                } else if (shuffleButton != null) {
-                    more.getMenu().getItem(1).setVisible(true);
-                }
-
-                if (trailerButton == null || ViewKt.isVisible(trailerButton)) {
-                    more.getMenu().getItem(2).setVisible(false);
-                } else if (trailerButton != null) {
-                    more.getMenu().getItem(2).setVisible(true);
-                }
-
-                if (favButton != null && !ViewKt.isVisible(favButton)) {
-                    if (mBaseItem.getUserData().getIsFavorite()) {
-                        more.getMenu().getItem(3).setVisible(false);
-                        more.getMenu().getItem(4).setVisible(true);
-                    } else {
-                        more.getMenu().getItem(3).setVisible(true);
-                        more.getMenu().getItem(4).setVisible(false);
-                    }
-                } else {
-                    more.getMenu().getItem(3).setVisible(false);
-                    more.getMenu().getItem(4).setVisible(false);
-                }
-
-                if (goToSeriesButton == null || ViewKt.isVisible(goToSeriesButton)) {
-                    more.getMenu().getItem(5).setVisible(false);
-                } else if (goToSeriesButton != null) {
-                    more.getMenu().getItem(5).setVisible(true);
-                }
-
-                more.show();
+                FullDetailsFragmentHelperKt.showDetailsMenu(FullDetailsFragment.this, v, ModelCompat.asSdk(mBaseItem));
             }
         });
 
@@ -1440,20 +1387,24 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
 
         for (int i = 0; i< versions.size(); i++) {
             MenuItem item = menu.getMenu().add(Menu.NONE, i, Menu.NONE, versions.get(i).getName());
-            item.setChecked(i == selectedVersionPopupIndex);
+            item.setChecked(i == mDetailsOverviewRow.getSelectedMediaSourceIndex());
         }
 
         menu.getMenu().setGroupCheckable(0,true,false);
         menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
-                selectedVersionPopupIndex = menuItem.getItemId();
-                apiClient.getValue().GetItemAsync(versions.get(selectedVersionPopupIndex).getId(), KoinJavaComponent.<UserRepository>get(UserRepository.class).getCurrentUser().getValue().getId().toString(), new LifecycleAwareResponse<BaseItemDto>(getLifecycle()) {
+                mDetailsOverviewRow.setSelectedMediaSourceIndex(menuItem.getItemId());
+                apiClient.getValue().GetItemAsync(versions.get(mDetailsOverviewRow.getSelectedMediaSourceIndex()).getId(), KoinJavaComponent.<UserRepository>get(UserRepository.class).getCurrentUser().getValue().getId().toString(), new LifecycleAwareResponse<BaseItemDto>(getLifecycle()) {
                     @Override
                     public void onResponse(BaseItemDto response) {
                         if (!getActive()) return;
 
                         mBaseItem = response;
+                        mDorPresenter.getViewHolder().setItem(mDetailsOverviewRow);
+                        if (mVersionsButton != null) {
+                            mVersionsButton.requestFocus();
+                        }
                     }
                 });
                 return true;
@@ -1495,74 +1446,6 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
             }
         }
         moreButton.setVisibility(collapsedOptions > 0 ? View.VISIBLE : View.GONE);
-    }
-
-    PopupMenu.OnMenuItemClickListener moreMenuListener = new PopupMenu.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.addFav:
-                case R.id.remFav:
-                    toggleFavorite();
-                    return true;
-                case R.id.playTrailers:
-                    playTrailers();
-                    return true;
-                case R.id.gotoSeries:
-                    gotoSeries();
-                    return true;
-                case R.id.shuffleAll:
-                    play(mBaseItem, 0, true);
-                    return true;
-                case R.id.addQueue:
-                    addItemToQueue();
-                    return true;
-            }
-            return false;
-        }
-    };
-
-    private final PopupMenu.OnMenuItemClickListener playWithMenuListener = new PopupMenu.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item) {
-            return playWithItemMenu(item, false);
-        }
-    };
-
-    private final PopupMenu.OnMenuItemClickListener shuffleWithMenuListener = new PopupMenu.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item) {
-            return playWithItemMenu(item, true);
-        }
-    };
-
-    private boolean playWithItemMenu(MenuItem item, boolean shuffle) {
-            if (item.getItemId() == R.id.play_with_vlc) {
-                systemPreferences.getValue().set(SystemPreferences.Companion.getChosenPlayer(), PreferredVideoPlayer.VLC);
-                play(mBaseItem, 0, shuffle);
-                return true;
-            } else if (item.getItemId() == R.id.play_with_exo) {
-                systemPreferences.getValue().set(SystemPreferences.Companion.getChosenPlayer(), PreferredVideoPlayer.EXOPLAYER);
-                play(mBaseItem, 0, shuffle);
-                return true;
-            } else if (item.getItemId() == R.id.play_with_external) {
-                systemPreferences.getValue().set(SystemPreferences.Companion.getChosenPlayer(), PreferredVideoPlayer.EXTERNAL);
-                PlaybackHelper.getItemsToPlay(ModelCompat.asSdk(mBaseItem), false, shuffle, new LifecycleAwareResponse<List<org.jellyfin.sdk.model.api.BaseItemDto>>(getLifecycle()) {
-                    @Override
-                    public void onResponse(List<org.jellyfin.sdk.model.api.BaseItemDto> response) {
-                        if (!getActive()) return;
-
-                        if (ModelCompat.asSdk(mBaseItem).getType() == BaseItemKind.MUSIC_ARTIST) {
-                            mediaManager.getValue().playNow(requireContext(), response, false);
-                        } else {
-                            videoQueueManager.getValue().setCurrentVideoQueue(response);
-                            navigationRepository.getValue().navigate(Destinations.INSTANCE.externalPlayer(0));
-                        }
-                    }
-                });
-                return true;
-            }
-        return false;
     }
 
     RecordPopup mRecordPopup;
@@ -1619,7 +1502,7 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
 
             if (!(item instanceof BaseRowItem)) return;
-            ItemLauncher.launch((BaseRowItem) item, (ItemRowAdapter) ((ListRow)row).getAdapter(), ((BaseRowItem)item).getIndex(), requireActivity());
+            ItemLauncher.launch((BaseRowItem) item, (ItemRowAdapter) ((ListRow)row).getAdapter(), ((BaseRowItem)item).getIndex(), requireContext());
         }
     }
 
@@ -1703,6 +1586,10 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
             }
         });
 
+    }
+
+    void shufflePlay() {
+        play(mBaseItem, 0, true);
     }
 
     protected void play(final BaseItemDto item, final int pos, final boolean shuffle) {

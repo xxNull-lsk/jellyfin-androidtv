@@ -9,13 +9,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import androidx.annotation.OptIn;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DefaultDataSourceFactory;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 
 import org.jellyfin.androidtv.R;
 import org.jellyfin.androidtv.constant.QueryType;
@@ -52,6 +55,7 @@ import java.util.Random;
 import kotlin.Lazy;
 import timber.log.Timber;
 
+@OptIn(markerClass = UnstableApi.class)
 public class LegacyMediaManager implements MediaManager {
     private Context context;
 
@@ -254,12 +258,17 @@ public class LegacyMediaManager implements MediaManager {
 
     private boolean createPlayer(Context context, int buffer) {
         try {
-
             // Create a new media player based on platform
             if (DeviceUtils.is60()) {
                 Timber.i("creating audio player using: exoplayer");
                 nativeMode = true;
-                mExoPlayer = new ExoPlayer.Builder(context).build();
+
+                ExoPlayer.Builder exoPlayerBuilder = new ExoPlayer.Builder(context);
+                DefaultRenderersFactory defaultRendererFactory = new DefaultRenderersFactory(context);
+                defaultRendererFactory.setEnableDecoderFallback(true);
+                defaultRendererFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
+                exoPlayerBuilder.setRenderersFactory(defaultRendererFactory);
+                mExoPlayer = exoPlayerBuilder.build();
                 mExoPlayer.addListener(new Player.Listener() {
                     @Override
                     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -401,7 +410,7 @@ public class LegacyMediaManager implements MediaManager {
     }
 
     @Override
-    public int queueAudioItem(org.jellyfin.sdk.model.api.BaseItemDto item) {
+    public void queueAudioItem(org.jellyfin.sdk.model.api.BaseItemDto item) {
         if (mCurrentAudioQueue == null) {
             createAudioQueue(new ArrayList<org.jellyfin.sdk.model.api.BaseItemDto>());
             clearUnShuffledQueue();
@@ -409,7 +418,6 @@ public class LegacyMediaManager implements MediaManager {
         pushToUnShuffledQueue();
         mCurrentAudioQueue.add(new AudioQueueItem(mCurrentAudioQueue.size(), item));
         fireQueueStatusChange();
-        return mCurrentAudioQueue.size()-1;
     }
 
     @Override
@@ -600,7 +608,7 @@ public class LegacyMediaManager implements MediaManager {
         options.setMediaSources(item.getMediaSources());
         DeviceProfile profile;
         if (DeviceUtils.is60()) {
-            profile = new ExoPlayerProfile(context, false, false, false);
+            profile = new ExoPlayerProfile(context, false, false);
         } else {
             profile = new LibVlcProfile(context, false);
         }

@@ -9,6 +9,7 @@ import androidx.core.app.NotificationManagerCompat
 import org.jellyfin.androidtv.BuildConfig
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.preference.UserPreferences
+import org.jellyfin.androidtv.preference.UserSettingPreferences
 import org.jellyfin.androidtv.ui.browsing.MainActivity
 import org.jellyfin.androidtv.ui.playback.GarbagePlaybackLauncher
 import org.jellyfin.androidtv.ui.playback.LegacyMediaManager
@@ -20,19 +21,21 @@ import org.jellyfin.playback.core.mediasession.mediaSessionPlugin
 import org.jellyfin.playback.core.playbackManager
 import org.jellyfin.playback.exoplayer.exoPlayerPlugin
 import org.jellyfin.playback.jellyfin.jellyfinPlugin
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
 import org.koin.dsl.module
+import kotlin.time.Duration.Companion.milliseconds
 import org.jellyfin.androidtv.ui.playback.PlaybackManager as LegacyPlaybackManager
 
 val playbackModule = module {
 	single { LegacyPlaybackManager(get()) }
 	single { VideoQueueManager() }
 	single { LegacyMediaManager(get()) }
-	single { RewriteMediaManager(get(), get(), get(), get(), get()) }
+	single { RewriteMediaManager(get(), get(), get(), get()) }
 
 	factory {
 		val preferences = get<UserPreferences>()
-		val useRewrite = preferences[UserPreferences.playbackRewriteAudioEnabled] && BuildConfig.DEVELOPMENT
+		val useRewrite = preferences[UserPreferences.playbackRewriteAudioEnabled]
 
 		if (useRewrite) get<RewriteMediaManager>()
 		else get<LegacyMediaManager>()
@@ -49,7 +52,7 @@ val playbackModule = module {
 	single { createPlaybackManager() }
 }
 
-fun Scope.createPlaybackManager() = playbackManager {
+fun Scope.createPlaybackManager() = playbackManager(androidContext()) {
 	install(exoPlayerPlugin(get()))
 	install(jellyfinPlugin(get(), get()))
 
@@ -72,4 +75,9 @@ fun Scope.createPlaybackManager() = playbackManager {
 		iconSmall = R.drawable.app_icon_foreground,
 		openIntent = pendingIntent,
 	)))
+
+	// Options
+	val userSettingPreferences = get<UserSettingPreferences>()
+	defaultRewindAmount = { userSettingPreferences[UserSettingPreferences.skipBackLength].milliseconds }
+	defaultFastForwardAmount = { userSettingPreferences[UserSettingPreferences.skipForwardLength].milliseconds }
 }

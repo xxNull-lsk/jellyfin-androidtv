@@ -15,9 +15,9 @@
     <string name="lbl_by_letter">字母顺序</string>
     <string name="lbl_suggested">推荐欣赏</string>
     <string name="lbl_genres">风格类型</string>
-    <string name="msg_not_implemented">" 未实装"</string>
+    <string name="msg_not_implemented">" 未实现"</string>
     <string name="lbl_latest">最近添加</string>
-    <string name="lbl_by_name">名称顺序</string>
+    <string name="lbl_by_name">按名称排序</string>
     <string name="lbl_favorites">我的收藏</string>
     <string name="lbl_coming_up">即将上映</string>
     <string name="lbl_favorite_channels">收藏频道</string>
@@ -26,7 +26,6 @@
     <string name="lbl_movies">电影</string>
     <string name="lbl_tv_series">电视剧</string>
     <string name="lbl_other">其它</string>
-    <string name="lbl_because_you_watched">"因为你已观看 "</string>
     <string name="lbl_play_all">全部播放</string>
     <string name="lbl_shuffle_all">随机播放</string>
     <string name="lbl_play">播放</string>
@@ -321,8 +320,7 @@
     <string name="pref_watched_indicator">显示已观看标志</string>
     <string name="lbl_use_series_thumbnails_description">显示章节时使用剧集缩略图</string>
     <string name="lbl_use_series_thumbnails">优先使用剧集缩略图</string>
-    <string name="lbl_episode_marks">仅在章节中</string>
-    <string name="lbl_hide_unwatched_count">隐藏未观看计数</string>
+    <string name="lbl_hide_unwatched_count">视频已观看</string>
     <string name="user_picker_last_user_summary">使用最后一个活跃账户</string>
     <string name="user_picker_last_user_title">最近常用</string>
     <string name="user_picker_disable_summary">允许显示登录界面</string>
@@ -335,7 +333,6 @@
     <string name="lbl_season_number">第%1$d季</string>
     <string name="add_user">添加帐号</string>
     <string name="help">帮助</string>
-    <string name="server_unsupported">服务端需要更新. 当前版本为 %1$s 但应用需要版本 %2$s 以上</string>
     <string name="welcome_content">请连接您的服务器以开始使用。</string>
     <string name="welcome_title">欢迎来到Jellyfin!</string>
     <string name="saved_servers">已保存的服务器</string>
@@ -398,7 +395,7 @@
     <string name="pref_next_up_timeout_disabled">无限</string>
     <string name="server_issue_ssl_handshake">SSL握手失败</string>
     <string name="server_issue_timeout">连接超时</string>
-    <string name="server_issue_outdated_version">服务器使用版本 %1$s 但需要为 %2$s 或更新版本</string>
+    <string name="server_issue_outdated_version">服务器使用不支持的版本 %1$s。请更新到 %2$s 或更高版本</string>
     <string name="server_issue_unsupported_version">服务器使用版本 %1$s，它不受支持</string>
     <string name="server_issue_missing_version">无法确定服务器版本</string>
     <string name="server_issue_invalid_product">服务器软件不兼容</string>
@@ -452,7 +449,7 @@
     <string name="pref_crash_reports">发送崩溃报告到服务器</string>
     <string name="pref_telemetry_description">发送崩溃报告，包括日志</string>
     <string name="pref_telemetry_category">崩溃报告</string>
-    <string name="server_unsupported_notification">此服务器使用的 Jellyfin %1$s 版本不受支持。请更新到 Jellyfin %2$s 版本以继续使用该程序。</string>
+    <string name="server_unsupported_notification">此服务器使用的 Jellyfin %1$s 版本不受支持。请更新到 Jellyfin %2$s 或更高版本以继续使用该程序。</string>
     <string name="crash_report_toast">哎呀！出了点问题，崩溃日志已经发送到你的 Jellyfin 服务器。</string>
     <string name="pref_crash_report_logs_disabled">日志将不会包含再崩溃报告中</string>
     <string name="pref_crash_report_logs_enabled">日志将包含在崩溃报告中</string>
@@ -503,4 +500,16 @@
     <plurals name="episodes">
         <item quantity="other">%1$s 剧集</item>
     </plurals>
+    <string name="enable_reactive_homepage">启用响应式主页</string>
+    <string name="not_set">未设置</string>
+    <string name="lbl_album_artists">专辑艺术家</string>
+    <string name="pref_music_cat">音乐</string>
+    <string name="because_you_watched">因为你看过 %1$s</string>
+    <string name="pref_music_rewrite_enable_description">仅当您遇到音乐播放问题时才禁用此功能</string>
+    <string name="disable_ui_mode_warning">禁用设备类型警告</string>
+    <string name="pref_music_rewrite_disable">禁用新的音乐后端</string>
+    <string name="photos">照片</string>
+    <string name="channels">频道</string>
+    <string name="photo_albums">相册</string>
+    <string name="lbl_hide_watched_checkmark">还有剩余剧集</string>
 </resources>

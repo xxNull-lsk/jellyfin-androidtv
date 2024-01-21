@@ -38,6 +38,7 @@ import org.jellyfin.androidtv.constant.ImageType;
 import org.jellyfin.androidtv.constant.PosterSize;
 import org.jellyfin.androidtv.constant.QueryType;
 import org.jellyfin.androidtv.data.model.FilterOptions;
+import org.jellyfin.androidtv.data.querying.AlbumArtistsQuery;
 import org.jellyfin.androidtv.data.querying.StdItemQuery;
 import org.jellyfin.androidtv.data.querying.ViewQuery;
 import org.jellyfin.androidtv.data.repository.CustomMessageRepository;
@@ -61,6 +62,7 @@ import org.jellyfin.androidtv.util.InfoLayoutHelper;
 import org.jellyfin.androidtv.util.KeyProcessor;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.androidtv.util.apiclient.EmptyLifecycleAwareResponse;
+import org.jellyfin.androidtv.util.apiclient.LifecycleAwareResponse;
 import org.jellyfin.apiclient.model.querying.ArtistsQuery;
 import org.jellyfin.apiclient.model.querying.ItemFields;
 import org.jellyfin.sdk.model.api.BaseItemDto;
@@ -206,6 +208,8 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
+        binding = null;
         mGridView = null;
     }
 
@@ -214,7 +218,9 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
         if (mGridViewHolder instanceof HorizontalGridPresenter.ViewHolder) {
             mGridView = ((HorizontalGridPresenter.ViewHolder) mGridViewHolder).getGridView();
             mGridView.setGravity(Gravity.CENTER_VERTICAL);
-            mGridView.setPadding(mGridPaddingLeft, mGridPaddingTop, mGridPaddingLeft, mGridPaddingTop); // prevent initial card cutoffs
+            ViewGroup.MarginLayoutParams titleMargin = (ViewGroup.MarginLayoutParams) binding.title.getLayoutParams();
+            ViewGroup.MarginLayoutParams clockMargin = (ViewGroup.MarginLayoutParams) binding.clock.getLayoutParams();
+            mGridView.setPadding(titleMargin.getMarginStart(), mGridPaddingTop, clockMargin.getMarginEnd(), mGridPaddingTop); // prevent initial card cutoffs
         } else if (mGridViewHolder instanceof VerticalGridPresenter.ViewHolder) {
             mGridView = ((VerticalGridPresenter.ViewHolder) mGridViewHolder).getGridView();
             mGridView.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -564,7 +570,7 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
                     //Special queries needed for album artists
                     String includeType = getArguments().getString(Extras.IncludeType);
                     if ("AlbumArtist".equals(includeType)) {
-                        ArtistsQuery albumArtists = new ArtistsQuery();
+                        AlbumArtistsQuery albumArtists = new AlbumArtistsQuery();
                         albumArtists.setUserId(userRepository.getValue().getCurrentUser().getValue().getId().toString());
                         albumArtists.setFields(new ItemFields[]{
                                 ItemFields.PrimaryImageAspectRatio,
@@ -573,6 +579,17 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
                         });
                         albumArtists.setParentId(mParentId.toString());
                         setRowDef(new BrowseRowDef("", albumArtists, CHUNK_SIZE_MINIMUM, new ChangeTriggerType[]{}));
+                        return;
+                    } else if ("Artist".equals(includeType)) {
+                        ArtistsQuery artists = new ArtistsQuery();
+                        artists.setUserId(userRepository.getValue().getCurrentUser().getValue().getId().toString());
+                        artists.setFields(new ItemFields[]{
+                                ItemFields.PrimaryImageAspectRatio,
+                                ItemFields.ItemCounts,
+                                ItemFields.ChildCount
+                        });
+                        artists.setParentId(mParentId.toString());
+                        setRowDef(new BrowseRowDef("", artists, CHUNK_SIZE_MINIMUM, new ChangeTriggerType[]{}));
                         return;
                     }
                     query.setIncludeItemTypes(new String[]{includeType != null ? includeType : "MusicAlbum"});
@@ -675,8 +692,11 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
             case LiveTvRecording:
                 mAdapter = new ItemRowAdapter(requireContext(), mRowDef.getRecordingQuery(), chunkSize, mCardPresenter, null);
                 break;
-            case AlbumArtists:
+            case Artists:
                 mAdapter = new ItemRowAdapter(requireContext(), mRowDef.getArtistsQuery(), chunkSize, mCardPresenter, null);
+                break;
+            case AlbumArtists:
+                mAdapter = new ItemRowAdapter(requireContext(), mRowDef.getAlbumArtistsQuery(), chunkSize, mCardPresenter, null);
                 break;
             default:
                 mAdapter = new ItemRowAdapter(requireContext(), mRowDef.getQuery(), chunkSize, mRowDef.getPreferParentThumb(), mRowDef.isStaticHeight(), mCardPresenter, null);
@@ -699,16 +719,17 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
                     updateCounter(mAdapter.getTotalItems() > 0 ? 1 : 0);
                 }
                 mLetterButton.setVisibility(ItemSortBy.SortName.equals(mAdapter.getSortBy()) ? View.VISIBLE : View.GONE);
-                if (mAdapter.getTotalItems() == 0) {
-                    binding.toolBar.requestFocus();
+                if (mAdapter.getItemsLoaded() == 0) {
+                    mGridView.setFocusable(false);
                     mHandler.postDelayed(() -> {
                         if (!getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED))
                             return;
 
                         binding.title.setText(mFolder.getName());
                     }, 500);
-                } else {
-                    if (mGridView != null) mGridView.requestFocus();
+                } else if (mGridView != null) {
+                    mGridView.setFocusable(true);
+                    mGridView.requestFocus();
                 }
             }
         });
@@ -910,20 +931,23 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
         if (mCurrentItem != null && mCurrentItem.getBaseItemType() != BaseItemKind.PHOTO && mCurrentItem.getBaseItemType() != BaseItemKind.PHOTO_ALBUM
                 && mCurrentItem.getBaseItemType() != BaseItemKind.MUSIC_ARTIST && mCurrentItem.getBaseItemType() != BaseItemKind.MUSIC_ALBUM) {
             Timber.d("Refresh item \"%s\"", mCurrentItem.getFullName(requireContext()));
-            mCurrentItem.refresh(new EmptyLifecycleAwareResponse(getLifecycle()) {
+            BaseRowItem item = mCurrentItem;
+            item.refresh(new LifecycleAwareResponse<BaseItemDto>(getLifecycle()) {
                 @Override
-                public void onResponse() {
+                public void onResponse(BaseItemDto response) {
                     if (!getActive()) return;
 
-                    mAdapter.notifyItemRangeChanged(mAdapter.indexOf(mCurrentItem), 1);
+                    if (response == null) mAdapter.removeAt(mAdapter.indexOf(item), 1);
+                    else mAdapter.notifyItemRangeChanged(mAdapter.indexOf(item), 1);
+
                     //Now - if filtered make sure we still pass
-                    if (mAdapter.getFilters() != null) {
-                        if ((mAdapter.getFilters().isFavoriteOnly() && !mCurrentItem.isFavorite()) || (mAdapter.getFilters().isUnwatchedOnly() && mCurrentItem.isPlayed())) {
+                    if (response != null && mAdapter.getFilters() != null) {
+                        if ((mAdapter.getFilters().isFavoriteOnly() && !item.isFavorite()) || (mAdapter.getFilters().isUnwatchedOnly() && item.isPlayed())) {
                             // if we are about to remove the current item, throw focus to toolbar so framework doesn't crash
                             binding.toolBar.requestFocus();
-                            mAdapter.remove(mCurrentItem);
+                            mAdapter.remove(item);
                             mAdapter.setTotalItems(mAdapter.getTotalItems() - 1);
-                            updateCounter(mCurrentItem.getIndex());
+                            updateCounter(item.getIndex());
                         }
                     }
                 }
@@ -937,7 +961,7 @@ public class BrowseGridFragment extends Fragment implements View.OnKeyListener {
                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
 
             if (!(item instanceof BaseRowItem)) return;
-            ItemLauncher.launch((BaseRowItem) item, mAdapter, ((BaseRowItem) item).getIndex(), getActivity());
+            ItemLauncher.launch((BaseRowItem) item, mAdapter, ((BaseRowItem) item).getIndex(), requireContext());
         }
     }
 

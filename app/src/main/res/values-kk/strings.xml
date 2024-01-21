@@ -27,7 +27,6 @@
     <string name="lbl_movies">Filmder</string>
     <string name="lbl_tv_series">Telehikaialar</string>
     <string name="lbl_other">Basqa</string>
-    <string name="lbl_because_you_watched">"Öitkenı qaradyñyz "</string>
     <string name="lbl_play_all">Bärın oinatu</string>
     <string name="lbl_shuffle_all">Bärın aralastyru</string>
     <string name="lbl_play">Oinatu</string>
@@ -320,7 +319,6 @@
     <string name="lbl_remove_users">Sonymen bırge būl barlyq bailanysty tırkelgılerdı alastaidy</string>
     <string name="lbl_use_series_thumbnails_description">Telebölımderdı beinelegende telehikaia nobailaryn paidalanu</string>
     <string name="lbl_use_series_thumbnails">Telehikaia nobailaryn qalau</string>
-    <string name="lbl_episode_marks">Tek telebölımderde</string>
     <string name="lbl_hide_unwatched_count">Qaralmau sanağyn jasyru</string>
     <string name="pref_watched_indicator">Qaralu körsetkışterı</string>
     <string name="user_picker_last_user_summary">Soñğy belsendı tirkelgını paidalanu</string>
@@ -333,7 +331,6 @@
     <string name="pref_theme_muted_purple">Bäseñdetılgen küreñ</string>
     <string name="no_user_warning">Bırde-bır tırkelgı tabylmady!
 \n«Tırkelgı üsteu» tüimeşıgın basyp jaña tırkelgını üsteñız.</string>
-    <string name="server_unsupported">Server jañartyluy qajet. Ağymdyq nūsqasy — %1$s, bıraq qoldanba %2$s nūsqasyn, nemese odan jañasyn qajet etedı</string>
     <string name="welcome_content">Bastau üşın serverıñızge qosylyñyz.</string>
     <string name="add_user">Tırkelgı üsteu</string>
     <string name="who_is_watching">Kım qarauda\?</string>

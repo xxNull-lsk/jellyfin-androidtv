@@ -17,9 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.constant.Extras
 import org.jellyfin.androidtv.data.service.BackgroundService
 import org.jellyfin.androidtv.preference.UserPreferences
@@ -63,7 +61,7 @@ abstract class BrowseFolderFragment : BrowseSupportFragment(), RowLoader {
 					item,
 					(row as ListRow).adapter as ItemRowAdapter,
 					item.index,
-					activity
+					requireContext()
 				)
 			}
 		}
@@ -122,10 +120,10 @@ abstract class BrowseFolderFragment : BrowseSupportFragment(), RowLoader {
 		val showClock = userPreferences[clockBehavior]
 		if (showClock !== ClockBehavior.ALWAYS && showClock !== ClockBehavior.IN_MENUS) return
 
-		val root = requireActivity().findViewById<ViewGroup>(R.id.browse_frame)
+		val root = requireActivity().findViewById<ViewGroup>(androidx.leanback.R.id.browse_frame)
 
 		// Move the title to the left to make way for the clock
-		val titleView = root.findViewById<TextView>(R.id.title_text)
+		val titleView = root.findViewById<TextView>(androidx.leanback.R.id.title_text)
 		if (titleView != null) {
 			val layoutParams = titleView.layoutParams as FrameLayout.LayoutParams
 			layoutParams.rightMargin = convertDpToPixel(root.context, 120)

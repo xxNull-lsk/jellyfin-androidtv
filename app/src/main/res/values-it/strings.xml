@@ -26,7 +26,6 @@
     <string name="lbl_movies">Film</string>
     <string name="lbl_tv_series">Serie TV</string>
     <string name="lbl_other">Altro</string>
-    <string name="lbl_because_you_watched">"Perché hai guardato "</string>
     <string name="lbl_play_all">Riproduci tutto</string>
     <string name="lbl_shuffle_all">Riproduci tutto a caso</string>
     <string name="lbl_play">Riproduci</string>
@@ -319,8 +318,7 @@
     <string name="pref_developer_link">Opzioni Sviluppatore</string>
     <string name="lbl_use_series_thumbnails_description">Utilizza miniature delle serie anche per gli episodi</string>
     <string name="lbl_use_series_thumbnails">Preferisci etichette di serie</string>
-    <string name="lbl_episode_marks">Solo episodi</string>
-    <string name="lbl_hide_unwatched_count">Nascondi numero di non visti</string>
+    <string name="lbl_hide_unwatched_count">Quando l\'elemento è stato visto</string>
     <string name="pref_watched_indicator">Mostra indicatori di avvenuta visione</string>
     <string name="lbl_tomatoes">Pomodori</string>
     <string name="user_picker_last_user_summary">Utilizza l\'ultimo utente attivo</string>
@@ -350,7 +348,6 @@
     <string name="who_is_watching">Chi sta guardando\?</string>
     <string name="no_user_warning">Non abbiamo trovato alcun utente!
 \nAggiungi un nuovo utente premendo il pulsante \"Aggiungi utente\".</string>
-    <string name="server_unsupported">Il server deve essere aggiornato. La versione attuale è %1$s ma l\'applicazione richiede %2$s o più recente</string>
     <string name="welcome_content">Connettiti al tuo server per incominciare.</string>
     <string name="welcome_title">Benvenuto su Jellyfin!</string>
     <string name="saved_servers">Server salvati</string>
@@ -369,7 +366,7 @@
     <string name="license_author">Autore</string>
     <string name="license_repository">Repository</string>
     <string name="license_website">Sito web</string>
-    <string name="license_artifact">Artifact</string>
+    <string name="license_artifact">artefatto</string>
     <string name="license_version">Versione</string>
     <string name="license_description">Descrizione</string>
     <string name="licenses_link_description">Visualizza le licenze delle librerie usate dall\'app Jellyfin</string>
@@ -398,7 +395,7 @@
     <string name="pref_next_up_timeout_disabled">∞</string>
     <string name="server_issue_ssl_handshake">Fallito handshake SSL</string>
     <string name="server_issue_timeout">La connessione è andata in timeout</string>
-    <string name="server_issue_outdated_version">Il server usa la versione %1$s ma deve essere %2$s o più recente</string>
+    <string name="server_issue_outdated_version">Il server usa la versione %1$s non più supportata. Aggiorna all %2$s o superiore</string>
     <string name="server_issue_unsupported_version">Il server usa la versione %1$s che non è supportata</string>
     <string name="server_issue_missing_version">Impossibile determinare la versione del server</string>
     <string name="server_issue_invalid_product">Il software del server è incompatibile</string>
@@ -444,8 +441,8 @@
     <string name="lbl_subtitle_delay">Ritardo sottotitoli</string>
     <string name="live_tv_preferences">Opzioni TV Diretta</string>
     <string name="lbl_additional_parts">Parti addizionali</string>
-    <string name="server_unsupported_notification">Questo server utilizza Jellyfin %1$s che non è più supportato. Aggiorna Jellyfin %2$s per continuare ad utilizzare l\'app.</string>
-    <string name="image_type_poster">Poster</string>
+    <string name="server_unsupported_notification">Questo server utilizza Jellyfin %1$s non è più supportato. Aggiorna Jellyfin %2$s o superiore per continuare ad utilizzare l\'app.</string>
+    <string name="image_type_poster">poster</string>
     <string name="crash_report_toast">Oops! Qualcosa è andato storto, la segnalazione di crash è stata inviata al tuo server Jellyfin.</string>
     <string name="pref_crash_report_logs_disabled">I log non saranno inclusi nelle segnalazioni di crash</string>
     <string name="pref_crash_report_logs_enabled">I log saranno inclusi nelle segnalazioni di crash</string>
@@ -486,7 +483,7 @@
     <plurals name="hours">
         <item quantity="one">%1$s ora</item>
         <item quantity="many">%1$s ore</item>
-        <item quantity="other"></item>
+        <item quantity="other">%1$s ore</item>
     </plurals>
     <string name="pref_screensaver">Salvaschermo</string>
     <string name="pref_screensaver_inapp_enabled_description">Motra il salvaschermo Jellyfin mentre l\'app è aperta</string>
@@ -494,21 +491,35 @@
     <plurals name="minutes">
         <item quantity="one">%1$s minuto</item>
         <item quantity="many">%1$s minuti</item>
-        <item quantity="other"></item>
+        <item quantity="other">%1$s minuti</item>
     </plurals>
     <plurals name="seconds">
         <item quantity="one">%1$s secondo</item>
         <item quantity="many">%1$s secondi</item>
-        <item quantity="other"></item>
+        <item quantity="other">%1$s secondi</item>
     </plurals>
     <plurals name="tracks">
         <item quantity="one">%1$s traccia</item>
         <item quantity="many">%1$s tracce</item>
-        <item quantity="other"></item>
+        <item quantity="other">%1$s tracce</item>
     </plurals>
     <plurals name="episodes">
         <item quantity="one">%1$s episodio</item>
         <item quantity="many">%1$s episodi</item>
-        <item quantity="other"></item>
+        <item quantity="other">%1$s episodi</item>
     </plurals>
+    <string name="pref_screensaver_inapp_enabled">Usa il salvaschermo integrato</string>
+    <string name="enable_reactive_homepage">Abilita la homepage reattiva</string>
+    <string name="lbl_album_artists">Artisti dell\'album</string>
+    <string name="not_set">Non impostato</string>
+    <string name="lbl_latest_in">Aggiunto di recente in %1$s</string>
+    <string name="pref_music_cat">Musica</string>
+    <string name="pref_music_rewrite_disable">Disabilita il nuovo backend per la musica</string>
+    <string name="pref_music_rewrite_enable_description">Disabilita solo se stai riscontrando problemi nella riproduzione della musica</string>
+    <string name="disable_ui_mode_warning">Disabilita avvisi riguardo al tipo di dispositivo</string>
+    <string name="because_you_watched">Perché hai guardato %1$s</string>
+    <string name="channels">Canali</string>
+    <string name="photos">Foto</string>
+    <string name="photo_albums">Album fotografici</string>
+    <string name="lbl_hide_watched_checkmark">Quando ci sono episodi rimanenti</string>
 </resources>

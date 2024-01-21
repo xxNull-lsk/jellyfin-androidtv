@@ -37,6 +37,7 @@ import org.jellyfin.androidtv.ui.AsyncImageView;
 import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem;
 import org.jellyfin.androidtv.ui.navigation.Destinations;
 import org.jellyfin.androidtv.ui.navigation.NavigationRepository;
+import org.jellyfin.androidtv.ui.playback.rewrite.RewriteMediaManager;
 import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter;
 import org.jellyfin.androidtv.util.ImageUtils;
 import org.jellyfin.androidtv.util.KeyProcessor;
@@ -92,6 +93,7 @@ public class AudioNowPlayingFragment extends Fragment implements View.OnKeyListe
         FragmentAudioNowPlayingBinding binding = FragmentAudioNowPlayingBinding.inflate(getLayoutInflater(), container, false);
 
         mPoster = binding.poster;
+        mPoster.setClipToOutline(true);
         mArtistName = binding.artistTitle;
         mGenreRow = binding.genreRow;
         mSongTitle = binding.song;
@@ -182,7 +184,7 @@ public class AudioNowPlayingFragment extends Fragment implements View.OnKeyListe
         requireActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
 
         mRowsFragment = new RowsSupportFragment();
-        requireActivity().getSupportFragmentManager().beginTransaction().add(R.id.rowsFragment, mRowsFragment).commit();
+        getChildFragmentManager().beginTransaction().replace(R.id.rowsFragment, mRowsFragment).commit();
 
         mRowsFragment.setOnItemViewClickedListener(new ItemViewClickedListener());
         mRowsFragment.setOnItemViewSelectedListener(new ItemViewSelectedListener());
@@ -223,13 +225,15 @@ public class AudioNowPlayingFragment extends Fragment implements View.OnKeyListe
     public void onPause() {
         super.onPause();
         dismissPopup();
-        mPoster.setKeepScreenOn(false);
         mediaManager.getValue().removeAudioEventListener(audioEventListener);
     }
 
     @Override
     public boolean onKey(View v, int keyCode, KeyEvent event) {
         if (event.getAction() != KeyEvent.ACTION_UP) return false;
+
+        // Rewrite uses media sessions which the system automatically manipulates on key presses
+        if (mediaManager.getValue() instanceof RewriteMediaManager) return false;
 
         switch (keyCode) {
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
@@ -316,9 +320,9 @@ public class AudioNowPlayingFragment extends Fragment implements View.OnKeyListe
     private void updatePoster() {
         // Figure image size
         Double aspect = ImageUtils.getImageAspectRatio(mBaseItem, false);
-        int posterHeight = aspect > 1 ? Utils.convertDpToPixel(requireActivity(), 150) : Utils.convertDpToPixel(requireActivity(), 250);
+        int posterHeight = aspect > 1 ? Utils.convertDpToPixel(requireContext(), 150) : Utils.convertDpToPixel(requireActivity(), 250);
 
-        String primaryImageUrl = ImageUtils.getPrimaryImageUrl(mBaseItem, false, posterHeight);
+        String primaryImageUrl = ImageUtils.getPrimaryImageUrl(mBaseItem, false, null, posterHeight);
         Timber.d("Audio Poster url: %s", primaryImageUrl);
         mPoster.load(primaryImageUrl, null, ContextCompat.getDrawable(requireContext(), R.drawable.ic_album), aspect, 0);
     }
@@ -339,7 +343,6 @@ public class AudioNowPlayingFragment extends Fragment implements View.OnKeyListe
             public void run() {
                 if (!getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) return;
 
-                mPoster.setKeepScreenOn(playing);
                 if (!playing) {
                     mPlayPauseButton.setImageResource(R.drawable.ic_play);
                     mPlayPauseButton.setContentDescription(getString(R.string.lbl_play));
@@ -380,6 +383,8 @@ public class AudioNowPlayingFragment extends Fragment implements View.OnKeyListe
     }
 
     public void setCurrentTime(long time) {
+        // Round the current time as otherwise the time played and time remaining will not be in sync
+        time = Math.round(time / 1000) * 1000;
         mCurrentProgress.setProgress(((Long) time).intValue());
         mCurrentPos.setText(TimeUtils.formatMillis(time));
         mRemainingTime.setText(mCurrentDuration > 0 ? "-" + TimeUtils.formatMillis(mCurrentDuration - time) : "");

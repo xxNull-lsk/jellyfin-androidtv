@@ -27,7 +27,6 @@
     <string name="lbl_movies">Filmy</string>
     <string name="lbl_tv_series">Seriály</string>
     <string name="lbl_other">Další</string>
-    <string name="lbl_because_you_watched">"Protože jste sledovali "</string>
     <string name="lbl_play_all">Přehrát vše</string>
     <string name="lbl_shuffle_all">Náhodně</string>
     <string name="lbl_play">Přehrát</string>
@@ -40,7 +39,7 @@
     <string name="msg_unable_to_create_recording">Nelze vytvořit záznam</string>
     <string name="msg_recording_cancelled">Nahrávání zrušeno</string>
     <string name="msg_unable_to_cancel">Nelze zrušit nahrávání</string>
-    <string name="lbl_cast_crew">Herci/Štáb</string>
+    <string name="lbl_cast_crew">Herci a Štáb</string>
     <string name="lbl_chapters">Kapitoly</string>
     <string name="lbl_specials">Speciály</string>
     <string name="lbl_trailers">Upoutávky</string>
@@ -130,7 +129,7 @@
     <string name="lbl_no_recordings">Žádné nahrávky</string>
     <string name="lbl_live_tv_guide">Programový průvodce</string>
     <string name="lbl_recorded_tv">Nahrané pořady</string>
-    <string name="pref_live_tv_cat">Televize</string>
+    <string name="pref_live_tv_cat">Živý přenos</string>
     <string name="lbl_programs">Programy</string>
     <string name="lbl_albums">Alba</string>
     <string name="lbl_artists">Úmělci</string>
@@ -138,7 +137,7 @@
     <string name="lbl_songs">Písně</string>
     <string name="lbl_album">Album</string>
     <string name="lbl_episodes">Epizody</string>
-    <string name="lbl_enable_cinema_mode">Povolit režim kina</string>
+    <string name="lbl_enable_cinema_mode">Kino režim</string>
     <string name="lbl_playlists">Seznam skladeb</string>
     <string name="msg_items_added">" položky přidány"</string>
     <string name="lbl_add_to_queue">Přidat do fronty</string>
@@ -149,9 +148,9 @@
     <string name="lbl_now_playing">Přehráváno</string>
     <string name="lbl_play_from_here">Přehrát odtud</string>
     <string name="lbl_remove_from_queue">Odebrat z fronty</string>
-    <string name="lbl_delete">Smazat</string>
+    <string name="lbl_delete">Odstranit</string>
     <string name="msg_item_added">" položka přidána"</string>
-    <string name="lbl_instant_mix">Okamžitý mix</string>
+    <string name="lbl_instant_mix">Rychlý mix</string>
     <string name="lbl_in_x_days">Za %d dní</string>
     <string name="lbl_bitstream_dts">Zvuk DTS jako bitový tok</string>
     <string name="desc_premieres">Zobrazit řadu nových úvodních epizod pro každý seriál, který sledujete</string>
@@ -183,7 +182,7 @@
     <string name="lbl_album_name">Název alba</string>
     <string name="lbl_next_episode">Další epizoda</string>
     <string name="lbl_previous_episode">Předchozí epizoda</string>
-    <string name="lbl_more_like_this">Více takovýchto</string>
+    <string name="lbl_more_like_this">Další podobné</string>
     <string name="lbl_resume_from">Přehrát od %1$s</string>
     <string name="lbl_resume_preroll">Pokračovat v přehrávání upoutávek</string>
     <string name="lbl_guide_option_number">Číslo kanálu</string>
@@ -217,13 +216,13 @@
     <string name="lbl_repeat_episodes">Opakovat epizody</string>
     <string name="lbl_premieres">Premiéry</string>
     <string name="lbl_new_episodes">Nové epizody</string>
-    <string name="lbl_audio_delay">Spoždění zvuku</string>
+    <string name="lbl_audio_delay">Zpoždění zvuku</string>
     <string name="lbl_new_only">Pouze nové</string>
     <string name="lbl_news">Novinky</string>
     <string name="lbl_colored_backgrounds">Barevné pozadí</string>
-    <string name="lbl_live_broadcasts">Živé vysílání</string>
+    <string name="lbl_live_broadcasts">Živá vysílání</string>
     <string name="pref_video_player_external">Externí aplikace</string>
-    <string name="pref_video_player_vlc">LibVLC</string>
+    <string name="pref_video_player_vlc">LibVLC (experimentální)</string>
     <string name="pref_video_player_exoplayer">ExoPlayer</string>
     <string name="pref_video_player_auto">Vybrat automaticky</string>
     <string name="lbl_my_media">Moje média</string>
@@ -320,7 +319,6 @@
     <string name="lbl_manage_servers">Spravovat servery</string>
     <string name="lbl_use_series_thumbnails_description">Použít náhledy seriálů při zobrazení epizod</string>
     <string name="lbl_use_series_thumbnails">Preferovat náhledy seriálů</string>
-    <string name="lbl_episode_marks">Pouze u epizod</string>
     <string name="lbl_hide_unwatched_count">Skrýt počet nezhlédnutých</string>
     <string name="pref_watched_indicator">Zobrazit indikátory zhlédnutí</string>
     <string name="user_picker_last_user_summary">Použít poslední aktivní účet</string>
@@ -353,7 +351,6 @@
     <string name="who_is_watching">Kdo se bude dívat\?</string>
     <string name="no_user_warning">Nebyly nalezeny žádné účty!
 \nNový účet přidejte stisknutím tlačítka \"Přidat účet\".</string>
-    <string name="server_unsupported">Server je nutné aktualizovat. Aktuální verze je %1$s, ale aplikace vyžaduje verzi %2$s nebo novější</string>
     <string name="welcome_content">Začněte připojením k serveru.</string>
     <string name="welcome_title">Vítejte v Jellyfin!</string>
     <string name="saved_servers">Uložené servery</string>
@@ -387,7 +384,7 @@
     <string name="home_section_resume">Pokračovat ve sledování</string>
     <string name="home_section_library_small">Moje média (malé)</string>
     <string name="home_section_library">Moje média</string>
-    <string name="home_section_latest_media">Nejnovější média</string>
+    <string name="home_section_latest_media">Nedávno přidaná média</string>
     <string name="home_sections">Sekce Domů</string>
     <string name="home_prefs">Domů</string>
     <string name="searchable_settings_description">Média</string>
@@ -398,7 +395,7 @@
     <string name="pref_next_up_timeout_disabled">∞</string>
     <string name="server_issue_ssl_handshake">Nebylo možné navázat spojení SSL</string>
     <string name="server_issue_timeout">Čas pro připojení vypršel</string>
-    <string name="server_issue_outdated_version">Verze serveru je %1$s, ale musí být %2$s nebo novější</string>
+    <string name="server_issue_outdated_version">Verze serveru %1$s již není podporovaná. Aktualizujte na verzi %2$s nebo novější</string>
     <string name="server_issue_unsupported_version">Verze serveru %1$s není podporována</string>
     <string name="server_issue_missing_version">Nebylo možné určit verzi serveru</string>
     <string name="server_issue_invalid_product">Software server není kompatibilní</string>
@@ -448,7 +445,7 @@
     <string name="lbl_adjust">Upravit</string>
     <string name="server_setup_incomplete">Nastavení tohoto serveru ještě nebylo dokončeno. Před přihlášením spusťte Jellyfin ve webovém prohlížeči a dokončete nastavení.</string>
     <string name="crash_report_toast">Aj! Něco se nepovedlo. Protokol o pádu byl zaslán Vašemu Jellyfin serveru.</string>
-    <string name="server_unsupported_notification">Tento server používá Jellyfin verzi %1$s, která již není podporována. Abyste mohli aplikaci dále používat, aktualizujte, prosím, na verzi Jellyfin %2$s.</string>
+    <string name="server_unsupported_notification">Tento server používá Jellyfin verzi %1$s, která již není podporována. Abyste mohli aplikaci dále používat, aktualizujte na verzi Jellyfin %2$s nebo novější.</string>
     <string name="app_notification_uimode_invalid">Tato aplikace je optimalizovaná pro televize. Pro ostatní zařízení doporučujeme použít naší mobilní aplikaci.</string>
     <string name="live_tv_preferences">Možnosti živé TV</string>
     <string name="login_quickconnect_step_3">3. Zadejte následující kód:</string>
@@ -477,4 +474,51 @@
     <string name="color_blue">Modrá barva</string>
     <string name="color_yellow">Žlutá barva</string>
     <string name="color_pink">Růžová barva</string>
+    <string name="pref_screensaver">Spořič obrazovky</string>
+    <string name="enable_reactive_homepage">Povolit reaktivní domovskou stránku</string>
+    <plurals name="hours">
+        <item quantity="one">%1$s hodina</item>
+        <item quantity="few">%1$s hodiny</item>
+        <item quantity="other">%1$s hodin</item>
+    </plurals>
+    <plurals name="episodes">
+        <item quantity="one">%1$s epizoda</item>
+        <item quantity="few">%1$s epizody</item>
+        <item quantity="other">%1$s epizod</item>
+    </plurals>
+    <plurals name="minutes">
+        <item quantity="one">%1$s minuta</item>
+        <item quantity="few">%1$s minuty</item>
+        <item quantity="other">%1$s minut</item>
+    </plurals>
+    <plurals name="tracks">
+        <item quantity="one">%1$s skladba</item>
+        <item quantity="few">%1$s skladby</item>
+        <item quantity="other">%1$s skladeb</item>
+    </plurals>
+    <string name="item_deleted">%1$s smazáno</string>
+    <string name="pref_screensaver_inapp_timeout">Spuštění spořiče obrazovky po</string>
+    <plurals name="seconds">
+        <item quantity="one">%1$s sekunda</item>
+        <item quantity="few">%1$s sekundy</item>
+        <item quantity="other">%1$s sekund</item>
+    </plurals>
+    <string name="pref_enable_media_management_description">Při procházení zobrazit možnost správy médií</string>
+    <string name="item_delete_confirm_title">Smazat položku</string>
+    <string name="item_delete_confirm_message">Opravdu chcete tuto položku ze serveru odstranit\? Tuto akci nelze vzít zpět.</string>
+    <string name="pref_screensaver_inapp_enabled">Použít spořič obrazovky v aplikaci</string>
+    <string name="item_deletion_failed">Nelze odstranit %1$s</string>
+    <string name="pref_enable_media_management">Povolit správu médií</string>
+    <string name="lbl_latest_in">Naposledy přidáno v %1$s</string>
+    <string name="pref_screensaver_inapp_enabled_description">Zobrazit Jellfin spořič obrazovky když je aplikace otevřená</string>
+    <string name="lbl_album_artists">Umělci alba</string>
+    <string name="pref_music_cat">Hudba</string>
+    <string name="pref_music_rewrite_disable">Zakázat nový přehrávač hudby</string>
+    <string name="pref_music_rewrite_enable_description">Zakažte pouze v případě problémů s přehráváním hudby</string>
+    <string name="not_set">Nenastaveno</string>
+    <string name="disable_ui_mode_warning">Vypnout upozornění na typ zařízení</string>
+    <string name="because_you_watched">Protože jste sledovali %1$s</string>
+    <string name="photo_albums">Fotoalba</string>
+    <string name="channels">Kanály</string>
+    <string name="photos">Fotky</string>
 </resources>

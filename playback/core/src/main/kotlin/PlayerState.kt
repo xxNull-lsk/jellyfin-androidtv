@@ -1,25 +1,35 @@
 package org.jellyfin.playback.core
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jellyfin.playback.core.backend.BackendService
 import org.jellyfin.playback.core.backend.PlayerBackendEventListener
-import org.jellyfin.playback.core.mediastream.MediaStream
+import org.jellyfin.playback.core.mediastream.DefaultMediaStreamState
+import org.jellyfin.playback.core.mediastream.MediaStreamResolver
+import org.jellyfin.playback.core.mediastream.MediaStreamState
+import org.jellyfin.playback.core.mediastream.PlayableMediaStream
 import org.jellyfin.playback.core.model.PlayState
+import org.jellyfin.playback.core.model.PlaybackOrder
 import org.jellyfin.playback.core.model.PositionInfo
+import org.jellyfin.playback.core.model.RepeatMode
 import org.jellyfin.playback.core.model.VideoSize
+import org.jellyfin.playback.core.queue.DefaultPlayerQueueState
 import org.jellyfin.playback.core.queue.EmptyQueue
+import org.jellyfin.playback.core.queue.PlayerQueueState
 import org.jellyfin.playback.core.queue.Queue
-import org.jellyfin.playback.core.queue.item.QueueEntry
 import kotlin.time.Duration
 
 interface PlayerState {
-	val queue: StateFlow<Queue>
-	val currentEntry: StateFlow<QueueEntry?>
+	val queue: PlayerQueueState
+	val streams: MediaStreamState
+	val volume: PlayerVolumeState
 	val playState: StateFlow<PlayState>
 	val speed: StateFlow<Float>
 	val videoSize: StateFlow<VideoSize>
+	val playbackOrder: StateFlow<PlaybackOrder>
+	val repeatMode: StateFlow<RepeatMode>
 
 	/**
 	 * The position information for the currently playing item or [PositionInfo.EMPTY]. This
@@ -28,9 +38,8 @@ interface PlayerState {
 	 */
 	val positionInfo: PositionInfo
 
-	// Queueing
-
-	fun play(queue: Queue)
+	// Queue management
+	fun play(playQueue: Queue)
 	fun stop()
 
 	// Pausing
@@ -44,20 +53,24 @@ interface PlayerState {
 	fun fastForward(amount: Duration? = null)
 	fun rewind(amount: Duration? = null)
 
-	// Playback properties (repeat & shuffle are managed by queue)
+	// Playback properties
 
 	fun setSpeed(speed: Float)
+
+	fun setPlaybackOrder(order: PlaybackOrder)
+
+	fun setRepeatMode(mode: RepeatMode)
 }
 
 class MutablePlayerState(
 	private val options: PlaybackManagerOptions,
+	scope: CoroutineScope,
+	mediaStreamResolvers: Collection<MediaStreamResolver>,
 	private val backendService: BackendService,
 ) : PlayerState {
-	private val _queue = MutableStateFlow<Queue>(EmptyQueue)
-	override val queue: StateFlow<Queue> get() = _queue.asStateFlow()
-
-	private val _currentEntry = MutableStateFlow<QueueEntry?>(null)
-	override val currentEntry: StateFlow<QueueEntry?> get() = _currentEntry.asStateFlow()
+	override val queue: PlayerQueueState
+	override val streams: MediaStreamState
+	override val volume: PlayerVolumeState
 
 	private val _playState = MutableStateFlow(PlayState.STOPPED)
 	override val playState: StateFlow<PlayState> get() = _playState.asStateFlow()
@@ -67,6 +80,12 @@ class MutablePlayerState(
 
 	private val _videoSize = MutableStateFlow(VideoSize.EMPTY)
 	override val videoSize: StateFlow<VideoSize> get() = _videoSize.asStateFlow()
+
+	private val _playbackOrder = MutableStateFlow(PlaybackOrder.DEFAULT)
+	override val playbackOrder: StateFlow<PlaybackOrder> get() = _playbackOrder.asStateFlow()
+
+	private val _repeatMode = MutableStateFlow(RepeatMode.NONE)
+	override val repeatMode: StateFlow<RepeatMode> get() = _repeatMode.asStateFlow()
 
 	override val positionInfo: PositionInfo
 		get() = backendService.backend?.getPositionInfo() ?: PositionInfo.EMPTY
@@ -81,16 +100,17 @@ class MutablePlayerState(
 				_videoSize.value = VideoSize(width, height)
 			}
 
-			override fun onMediaStreamEnd(mediaStream: MediaStream) = Unit
+			override fun onMediaStreamEnd(mediaStream: PlayableMediaStream) = Unit
 		})
+
+		queue = DefaultPlayerQueueState(this, scope, backendService)
+		streams = DefaultMediaStreamState(this, scope, mediaStreamResolvers, backendService)
+		volume = options.playerVolumeState
 	}
 
-	fun setCurrentEntry(currentEntry: QueueEntry?) {
-		_currentEntry.value = currentEntry
-	}
-
-	override fun play(queue: Queue) {
-		_queue.value = queue
+	override fun play(playQueue: Queue) {
+		queue.replaceQueue(playQueue)
+		backendService.backend?.play()
 	}
 
 	override fun pause() {
@@ -104,7 +124,7 @@ class MutablePlayerState(
 
 	override fun stop() {
 		backendService.backend?.stop()
-		_queue.value = EmptyQueue
+		queue.replaceQueue(EmptyQueue)
 	}
 
 	override fun seek(to: Duration) {
@@ -117,15 +137,23 @@ class MutablePlayerState(
 	}
 
 	override fun fastForward(amount: Duration?) {
-		seekRelative(amount ?: options.defaultFastForwardAmount.value)
+		seekRelative(amount ?: options.defaultFastForwardAmount())
 	}
 
 	override fun rewind(amount: Duration?) {
-		seekRelative(-(amount ?: options.defaultRewindAmount.value))
+		seekRelative(-(amount ?: options.defaultRewindAmount()))
 	}
 
 	override fun setSpeed(speed: Float) {
 		_speed.value = speed
 		backendService.backend?.setSpeed(speed)
+	}
+
+	override fun setPlaybackOrder(order: PlaybackOrder) {
+		_playbackOrder.value = order
+	}
+
+	override fun setRepeatMode(mode: RepeatMode) {
+		_repeatMode.value = mode
 	}
 }

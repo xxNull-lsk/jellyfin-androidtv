@@ -61,11 +61,11 @@
     <string name="pref_audio_compat">מיקס סאונד עבור סטריאו (2.0)</string>
     <string name="pref_audio_direct">ישיר</string>
     <string name="msg_cancel_entire_series">האם אתה בטוח שברצונך לבטל את כל הסדרה\?</string>
-    <string name="lbl_repeat_options">אפשרויות חזרה</string>
+    <string name="lbl_repeat_options">אפשרויות ניגון חוזר</string>
     <string name="lbl_only_new_episodes">רק פרקים חדשים</string>
     <string name="lbl_record_any_time">הקלט בכל זמן</string>
     <string name="lbl_record_any_channel">הקלט בכל ערוץ</string>
-    <string name="lbl_similar_items_library">דברים דומים בספרייה שלך</string>
+    <string name="lbl_similar_items_library">תוכן דומה בספרייה שלך</string>
     <string name="lbl_end_padding">סוף עיטוף</string>
     <string name="lbl_program_ended">תכנית הסתיימה</string>
     <string name="lbl_begin_padding">תחילת עיטוף</string>
@@ -89,7 +89,7 @@
     <string name="sum_tv_queuing">הכנס את שאר העונה לתור הצפייה בזמן ניגון פרק</string>
     <string name="lbl_tv_queuing">נגן להבא את כל הפרקים הבאים</string>
     <string name="lbl_empty">ריק</string>
-    <string name="lbl_no_items">אין סרטים</string>
+    <string name="lbl_no_items">אין תוכן</string>
     <string name="msg_cannot_play">לא ניתן לנגן את הסרט</string>
     <string name="msg_cannot_play_time">לא ניתן לניגון כרגע</string>
     <string name="lbl_never">אף פעם</string>
@@ -113,7 +113,7 @@
     <string name="lbl_people">אנשים</string>
     <string name="lbl_other_options">אפשרויות נוספות</string>
     <string name="lbl_last_played">"נצפה לאחרונה "</string>
-    <string name="lbl_directed_by">הופק ע״י</string>
+    <string name="lbl_directed_by">במאי</string>
     <string name="lbl_ends">נגמר</string>
     <string name="lbl_min">" דקות"</string>
     <string name="lbl_runs">הרצות</string>
@@ -126,7 +126,7 @@
     <string name="lbl_trailers">טריילרים</string>
     <string name="lbl_specials">מיוחדים</string>
     <string name="lbl_chapters">פרקים</string>
-    <string name="lbl_cast_crew">צוות השחקנים</string>
+    <string name="lbl_cast_crew">שחקנים וצוות</string>
     <string name="msg_unable_to_cancel">ביטול ההקלטה נכשל</string>
     <string name="msg_recording_cancelled">ההקלטה בוטלה</string>
     <string name="msg_unable_to_create_recording">ביצוע ההקלטה נכשל</string>
@@ -140,14 +140,13 @@
     <string name="lbl_play">נגן</string>
     <string name="lbl_shuffle_all">ערבוב</string>
     <string name="lbl_play_all">נגן הכל</string>
-    <string name="lbl_because_you_watched">"בגלל שצפית "</string>
     <string name="lbl_other">אחר</string>
     <string name="lbl_tv_series">סדרות</string>
     <string name="lbl_movies">סרטים</string>
     <string name="lbl_collections">אוספים</string>
     <string name="lbl_other_channels">ערוצים אחרים</string>
     <string name="lbl_favorite_channels">ערוצים מועדפים</string>
-    <string name="lbl_coming_up">בקרוב</string>
+    <string name="lbl_coming_up">הצפייה הבאה</string>
     <string name="lbl_favorites">מועדפים</string>
     <string name="lbl_by_name">לפי שם</string>
     <string name="lbl_latest">חדש</string>
@@ -204,7 +203,7 @@
     <string name="lbl_recent_recordings">הקלטות אחרונות</string>
     <string name="lbl_kids">ילדים</string>
     <string name="lbl_sports">ספורט</string>
-    <string name="no_program_data">&lt;אין נתונים&gt;</string>
+    <string name="no_program_data">אין מידע על התוכנית</string>
     <string name="msg_record_entire_series">להקליט את הסדרה כולה\?</string>
     <string name="lbl_just_this_once">רק הפעם</string>
     <string name="lbl_select_date">בחר תאריך</string>
@@ -256,7 +255,7 @@
     <string name="pref_video_player_external">נגן חיצוני</string>
     <string name="pref_video_player_exoplayer">אקסופליר</string>
     <string name="pref_video_player_auto">בחר אוטומאטית</string>
-    <string name="pref_theme_emerald">אזמרגד קלאסי</string>
+    <string name="pref_theme_emerald">קלאסי</string>
     <string name="pref_theme_dark">חשוך (רגיל)</string>
     <string name="lbl_my_media">המדיה שלי</string>
     <string name="lbl_image_size">גודל תמונה</string>
@@ -284,7 +283,7 @@
     <string name="watch_count_overflow">99+</string>
     <string name="bitrate_kbit">%1$,.0f קילוביט לשניה</string>
     <string name="bitrate_mbit">‭%1$,.0f Mbit/s</string>
-    <string name="pref_video_player_vlc">libVLC</string>
+    <string name="pref_video_player_vlc">libVLC (ניסיוני)</string>
     <string name="lbl_item">פריט</string>
     <string name="lbl_items">פריטים</string>
     <string name="server_connection_failed">לא ניתן להתחבר לשרת</string>
@@ -303,7 +302,6 @@
     <string name="auto_sign_in">התחברות אוטומטית</string>
     <string name="lbl_use_series_thumbnails_description">הצג את תמונת הכותרת של הסדרה בהצגת פרקים</string>
     <string name="lbl_use_series_thumbnails">העדף שימוש בתמונת הכותרת של הסדרה</string>
-    <string name="lbl_episode_marks">רק על פרקים</string>
     <string name="lbl_hide_unwatched_count">הסתר את מספר התכנים שלא נצפו</string>
     <string name="pref_watched_indicator">הצג סימן עבור פריטים שנצפו</string>
     <string name="login_help_description">Jellyfin לא יכולה לפעול בלי שרת מחובר. היעזר במדריך שלנו בכתובת docs.jellyfin.org או דרך קוד QR המוצג על מנת להתחיל להשתמש בתוכנה.</string>
@@ -346,7 +344,6 @@
     <string name="who_is_watching">מי צופה\?</string>
     <string name="no_user_warning">לא הצלחנו למצוא אף חשבון!
 \nהוסף חשבון חדש על ידי לחיצה על כפתור \"הוסף משתמש\".</string>
-    <string name="server_unsupported">השרת צריך להיות מעודכן. הגרסה הנוכחית היא %1$s אבל צריך גרסה %2$s או חדשה יותר</string>
     <string name="welcome_content">תתחבר לשרת שלך כדי להתחיל.</string>
     <string name="welcome_title">ברוך הבא לjellyfin!</string>
     <string name="saved_servers">שרתים שמורים</string>
@@ -377,7 +374,7 @@
     <string name="pref_customization">התאמה אישית</string>
     <string name="server_issue_ssl_handshake">קישור SSL נכשל</string>
     <string name="server_issue_timeout">תם הזמן הקצוב להתחברות</string>
-    <string name="server_issue_outdated_version">השרת משתמש בגרסה %1$s, יש לעדכן את השרת לגרסה %2$s או חדשה יותר</string>
+    <string name="server_issue_outdated_version">השרת משתמש בגרסה %1$s שאינה נתמכת עוד, אנא עדכנו את השרת לגרסה %2$s או חדשה יותר</string>
     <string name="server_issue_unsupported_version">השרת משתמש בגרסה %1$s שאינה נתמכת</string>
     <string name="server_issue_missing_version">לא ניתן לזהות גרסת השרת</string>
     <string name="server_issue_invalid_product">תוכנת השרת אינה נתמכת</string>
@@ -395,7 +392,7 @@
     <string name="home_section_resume">המשך צפייה</string>
     <string name="home_section_library_small">המדיה שלי (מוקטן)</string>
     <string name="home_section_library">המדיה שלי</string>
-    <string name="home_section_latest_media">מדיה שנוגנה לאחרונה</string>
+    <string name="home_section_latest_media">מדיה שנוספה לאחרונה</string>
     <string name="home_sections">חלקות מסך הבית</string>
     <string name="license_license">רשיון</string>
     <string name="license_author">מען</string>
@@ -454,7 +451,7 @@
     <string name="pref_refresh_rate_scale_on_tv">קנה מידה בטלוויזיה</string>
     <string name="pref_refresh_rate_scale_on_device">קנה מידה במכשיר</string>
     <string name="app_notification_uimode_invalid">אפליקציה זו מותאמת לטלוויזיות. אנו ממליצים להשתמש באפליקציה שלנו לנייד במכשירים אחרים.</string>
-    <string name="server_unsupported_notification">שרת זה משתמש בגרסת Jellyfin %1$s שאינה נתמכת. עדכן ל-Jellyfin %2$s כדי להמשיך להשתמש באפליקציה.</string>
+    <string name="server_unsupported_notification">שרת זה משתמש בגרסת %1$s Jellyfin שאינה נתמכת. עדכן ל-Jellyfin %2$s כדי להמשיך להשתמש באפליקציה.</string>
     <string name="pref_telemetry_description">שלח דוחות קריסה, כולל יומנים</string>
     <string name="pref_crash_reports">שלח דוחות קריסה לשרת</string>
     <string name="pref_crash_reports_enabled">דוחות קריסה יישלחו לשרת האחרון שבו השתמשת</string>
@@ -463,8 +460,8 @@
     <string name="server_setup_incomplete">ההגדרה של שרת זה לא הושלמה. פתח את Jellyfin בדפדפן אינטרנט כדי לסיים את ההגדרה לפני הכניסה.</string>
     <string name="episode_name_special">מיוחד</string>
     <string name="crash_report_toast">אופס! משהו השתבש, דוח קריסה נשלח לשרת Jellyfin שלך.</string>
-    <string name="app_notification_beta">האפליקציה עודכנה ל%1$s
-\nתודה על השתתפותך בתוכנית הבטא של ג\'ליפין</string>
+    <string name="app_notification_beta">היישום עודכן ל־%1$s
+\nתודה על השתתפותך בתוכנית הבטא של Jellyfin</string>
     <string name="color_black">שחור</string>
     <string name="lbl_subtitle_fg">צבע הכתוביות</string>
     <string name="lbl_subtitle_stroke">גודל הכתוביות</string>
@@ -477,8 +474,56 @@
     <string name="color_darkgrey">אפור כהה</string>
     <string name="color_cyan">טורקיז</string>
     <string name="color_pink">ורוד</string>
-    <string name="pref_enable_media_management">הפעל סידור מדיה</string>
+    <string name="pref_enable_media_management">הפעלת ניהול מדיה</string>
     <string name="item_delete_confirm_message">אתה בטוח שאתה רוצה למחוק את הפריט הזה מהשרת\? אי אפשר לשחזר את הפעולה הזאת.</string>
     <string name="pref_enable_media_management_description">הראה אפשרויות לסדר את המדיה בזמן שימוש</string>
     <string name="item_delete_confirm_title">מחיקת פריט</string>
+    <string name="item_deleted">%1$s נמחקו</string>
+    <string name="item_deletion_failed">לא ניתן למחוק את %1$s</string>
+    <string name="pref_screensaver">שומר מסך</string>
+    <string name="pref_screensaver_inapp_enabled_description">הצג את שומר המסך בזמן שג\'ליפין פתוח</string>
+    <string name="lbl_album_artists">אלבומים</string>
+    <plurals name="tracks">
+        <item quantity="one">שיר %1$s</item>
+        <item quantity="two">%1$s שירים</item>
+        <item quantity="many">%1$s שירים</item>
+        <item quantity="other">%1$s שירים</item>
+    </plurals>
+    <string name="enable_reactive_homepage">הפעלת עמוד בית מסתגל</string>
+    <plurals name="seconds">
+        <item quantity="one">שניה %1$s</item>
+        <item quantity="two">%1$s שניות</item>
+        <item quantity="many">%1$s שניות</item>
+        <item quantity="other">%1$s שניות</item>
+    </plurals>
+    <string name="not_set">לא הוגדר</string>
+    <plurals name="hours">
+        <item quantity="one">שעה %1$s</item>
+        <item quantity="two">%1$s שעות</item>
+        <item quantity="many">%1$s שעות</item>
+        <item quantity="other">%1$s שעות</item>
+    </plurals>
+    <plurals name="episodes">
+        <item quantity="one">פרק %1$s</item>
+        <item quantity="two">%1$s פרקים</item>
+        <item quantity="many">%1$s פרקים</item>
+        <item quantity="other">%1$s פרקים</item>
+    </plurals>
+    <string name="pref_screensaver_inapp_enabled">השתמש בשומר מסך מובנה</string>
+    <string name="pref_screensaver_inapp_timeout">התחל שומר מסך אחרי</string>
+    <plurals name="minutes">
+        <item quantity="one">דקה %1$s</item>
+        <item quantity="two">%1$s דקות</item>
+        <item quantity="many">%1$s דקות</item>
+        <item quantity="other">%1$s דקות</item>
+    </plurals>
+    <string name="lbl_latest_in">נוסף לאחרונה ב%1$s</string>
+    <string name="pref_music_cat">מוזיקה</string>
+    <string name="pref_music_rewrite_disable">השבתת מנגנון מוזיקה חדש</string>
+    <string name="pref_music_rewrite_enable_description">יש להשבית את זה רק אם חווית תקלות בניגון מוזיקה</string>
+    <string name="disable_ui_mode_warning">השבתת אזהרת סוג התקן</string>
+    <string name="because_you_watched">כיוון שצפית ב־%1$s</string>
+    <string name="channels">ערוצים</string>
+    <string name="photos">תמונות</string>
+    <string name="photo_albums">אלבומי תמונות</string>
 </resources>

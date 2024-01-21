@@ -15,6 +15,7 @@ import org.jellyfin.androidtv.util.profile.ProfileHelper.photoDirectPlayProfile
 import org.jellyfin.androidtv.util.profile.ProfileHelper.subtitleProfile
 import org.jellyfin.apiclient.model.dlna.CodecProfile
 import org.jellyfin.apiclient.model.dlna.CodecType
+import org.jellyfin.apiclient.model.dlna.DeviceProfile
 import org.jellyfin.apiclient.model.dlna.DirectPlayProfile
 import org.jellyfin.apiclient.model.dlna.DlnaProfileType
 import org.jellyfin.apiclient.model.dlna.EncodingContext
@@ -26,10 +27,9 @@ import org.jellyfin.apiclient.model.dlna.TranscodingProfile
 
 class ExoPlayerProfile(
 	context: Context,
-	isLiveTV: Boolean = false,
-	isLiveTVDirectPlayEnabled: Boolean = false,
+	disableVideoDirectPlay: Boolean = false,
 	isAC3Enabled: Boolean = false,
-) : BaseProfile() {
+) : DeviceProfile() {
 	private val downmixSupportedAudioCodecs = arrayOf(
 		Codec.Audio.AAC,
 		Codec.Audio.MP3,
@@ -52,6 +52,8 @@ class ExoPlayerProfile(
 		add(Codec.Audio.TRUEHD)
 		add(Codec.Audio.PCM_ALAW)
 		add(Codec.Audio.PCM_MULAW)
+		add(Codec.Audio.OPUS)
+		add(Codec.Audio.FLAC)
 	}.toTypedArray()
 
 	private val allSupportedAudioCodecsWithoutFFmpegExperimental = allSupportedAudioCodecs
@@ -60,6 +62,9 @@ class ExoPlayerProfile(
 
 	init {
 		name = "AndroidTV-ExoPlayer"
+
+		maxStreamingBitrate = 20_000_000 // 20 mbps
+		maxStaticBitrate = 10_000_0000 // 10 mbps
 
 		transcodingProfiles = arrayOf(
 			// TS video profile
@@ -89,13 +94,11 @@ class ExoPlayerProfile(
 
 		directPlayProfiles = buildList {
 			// Video direct play
-			if (!isLiveTV || isLiveTVDirectPlayEnabled) {
+			if (!disableVideoDirectPlay) {
 				add(DirectPlayProfile().apply {
 					type = DlnaProfileType.Video
 
 					container = listOfNotNull(
-						if (isLiveTV) Codec.Container.TS else null,
-						if (isLiveTV) Codec.Container.MPEGTS else null,
 						Codec.Container.M4V,
 						Codec.Container.MOV,
 						Codec.Container.XVID,
@@ -128,14 +131,12 @@ class ExoPlayerProfile(
 			// Audio direct play
 			add(audioDirectPlayProfile(allSupportedAudioCodecs + arrayOf(
 				Codec.Audio.MPA,
-				Codec.Audio.FLAC,
 				Codec.Audio.WAV,
 				Codec.Audio.WMA,
 				Codec.Audio.OGG,
 				Codec.Audio.OGA,
 				Codec.Audio.WEBMA,
 				Codec.Audio.APE,
-				Codec.Audio.OPUS,
 			)))
 			// Photo direct play
 			add(photoDirectPlayProfile)
@@ -207,12 +208,12 @@ class ExoPlayerProfile(
 
 		subtitleProfiles = arrayOf(
 			subtitleProfile(Codec.Subtitle.SRT, SubtitleDeliveryMethod.External),
-			subtitleProfile(Codec.Subtitle.SRT, SubtitleDeliveryMethod.Embed),
-			subtitleProfile(Codec.Subtitle.SUBRIP, SubtitleDeliveryMethod.Embed),
+			subtitleProfile(Codec.Subtitle.SUBRIP, SubtitleDeliveryMethod.External),
 			subtitleProfile(Codec.Subtitle.ASS, SubtitleDeliveryMethod.Encode),
 			subtitleProfile(Codec.Subtitle.SSA, SubtitleDeliveryMethod.Encode),
-			subtitleProfile(Codec.Subtitle.PGS, SubtitleDeliveryMethod.Encode),
-			subtitleProfile(Codec.Subtitle.PGSSUB, SubtitleDeliveryMethod.Encode),
+			subtitleProfile(Codec.Subtitle.PGS, SubtitleDeliveryMethod.Embed),
+			subtitleProfile(Codec.Subtitle.PGSSUB, SubtitleDeliveryMethod.Embed),
+			subtitleProfile(Codec.Subtitle.DVBSUB, SubtitleDeliveryMethod.Embed),
 			subtitleProfile(Codec.Subtitle.DVDSUB, SubtitleDeliveryMethod.Encode),
 			subtitleProfile(Codec.Subtitle.VTT, SubtitleDeliveryMethod.Embed),
 			subtitleProfile(Codec.Subtitle.SUB, SubtitleDeliveryMethod.Embed),

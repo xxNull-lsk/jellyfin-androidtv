@@ -24,7 +24,7 @@ class MyDetailsOverviewRowPresenter(
 		fun setItem(row: MyDetailsOverviewRow) {
 			setTitle(row.item.name)
 
-			InfoLayoutHelper.addInfoRow(view.context, row.item, binding.fdMainInfoRow, false, false)
+			InfoLayoutHelper.addInfoRow(view.context, row.item, row.selectedMediaSourceIndex, binding.fdMainInfoRow, false, false)
 			binding.fdGenreRow.text = row.item.genres?.joinToString(" / ")
 
 			binding.infoTitle1.text = row.infoItem1?.label
@@ -53,14 +53,18 @@ class MyDetailsOverviewRowPresenter(
 
 				binding.fdSummaryText.maxLines = 9
 				binding.fdGenreRow.isVisible = false
-				binding.fdMainInfoRow.isVisible = false
 				binding.leftFrame.updateLayoutParams<RelativeLayout.LayoutParams> {
 					width = 100.dp(view.context)
 				}
 			}
 
 			binding.fdButtonRow.removeAllViews()
-			for (button in row.actions) binding.fdButtonRow.addView(button)
+			for (button in row.actions) {
+				val parent = button.parent
+				if (parent is ViewGroup) parent.removeView(button)
+
+				binding.fdButtonRow.addView(button)
+			}
 		}
 
 		fun setTitle(title: String?) {

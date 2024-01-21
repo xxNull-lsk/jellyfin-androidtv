@@ -16,7 +16,7 @@ import org.jellyfin.androidtv.data.model.ChapterItemInfo
 import org.jellyfin.androidtv.ui.GridButton
 import org.jellyfin.androidtv.util.ImageUtils
 import org.jellyfin.androidtv.util.TimeUtils
-import org.jellyfin.androidtv.util.apiclient.EmptyLifecycleAwareResponse
+import org.jellyfin.androidtv.util.apiclient.LifecycleAwareResponse
 import org.jellyfin.androidtv.util.apiclient.getSeriesOverview
 import org.jellyfin.androidtv.util.sdk.compat.asSdk
 import org.jellyfin.androidtv.util.sdk.getFullName
@@ -25,16 +25,16 @@ import org.jellyfin.apiclient.model.dto.BaseItemDto
 import org.jellyfin.apiclient.model.livetv.ChannelInfoDto
 import org.jellyfin.apiclient.model.livetv.SeriesTimerInfoDto
 import org.jellyfin.sdk.api.client.ApiClient
+import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.BaseItemPerson
-import org.jellyfin.sdk.model.api.SearchHint
+import org.jellyfin.sdk.model.extensions.ticks
 import org.jellyfin.sdk.model.serializer.toUUID
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.time.temporal.ChronoUnit
 import org.jellyfin.apiclient.interaction.ApiClient as LegacyApiClient
 
 open class BaseRowItem protected constructor(
@@ -47,9 +47,9 @@ open class BaseRowItem protected constructor(
 	var baseItem: org.jellyfin.sdk.model.api.BaseItemDto? = null,
 	val basePerson: BaseItemPerson? = null,
 	val chapterInfo: ChapterItemInfo? = null,
-	val searchHint: SearchHint? = null,
 	val seriesTimerInfo: SeriesTimerInfoDto? = null,
 	val gridButton: GridButton? = null,
+	var preferSeriesPoster: Boolean = false,
 ) : KoinComponent {
 	// Start of constructor hell
 	@JvmOverloads
@@ -59,6 +59,7 @@ open class BaseRowItem protected constructor(
 		preferParentThumb: Boolean = false,
 		staticHeight: Boolean = false,
 		selectAction: BaseRowItemSelectAction = BaseRowItemSelectAction.ShowDetails,
+		preferSeriesPoster: Boolean = false,
 	) : this(
 		baseRowType = when (item.asSdk().type) {
 			BaseItemKind.PROGRAM -> BaseRowType.LiveTvProgram
@@ -70,9 +71,19 @@ open class BaseRowItem protected constructor(
 		preferParentThumb = preferParentThumb,
 		selectAction = selectAction,
 		baseItem = item.asSdk(),
+		preferSeriesPoster = preferSeriesPoster,
 	)
 
-	constructor(item: org.jellyfin.sdk.model.api.BaseItemDto) : this(
+	@JvmOverloads
+	constructor(
+		item: org.jellyfin.sdk.model.api.BaseItemDto,
+		index: Int = 0,
+		preferParentThumb: Boolean = false,
+		staticHeight: Boolean = false,
+	) : this(
+		index = index,
+		preferParentThumb = preferParentThumb,
+		staticHeight = staticHeight,
 		baseRowType = when (item.type) {
 			BaseItemKind.PROGRAM -> BaseRowType.LiveTvProgram
 			BaseItemKind.RECORDING -> BaseRowType.LiveTvRecording
@@ -116,13 +127,6 @@ open class BaseRowItem protected constructor(
 	)
 
 	constructor(
-		item: SearchHint,
-	) : this(
-		baseRowType = BaseRowType.SearchHint,
-		searchHint = item,
-	)
-
-	constructor(
 		item: ChapterItemInfo,
 	) : this(
 		baseRowType = BaseRowType.Chapter,
@@ -151,34 +155,38 @@ open class BaseRowItem protected constructor(
 		BaseItemKind.MUSIC_ARTIST
 	).contains(baseItem?.type)
 
-	fun getImageUrl(context: Context, imageType: ImageType, maxHeight: Int) = when (baseRowType) {
+	fun getImageUrl(context: Context, imageType: ImageType, fillWidth: Int, fillHeight: Int) = when (baseRowType) {
 		BaseRowType.BaseItem,
 		BaseRowType.LiveTvProgram,
 		BaseRowType.LiveTvRecording -> {
 			val apiClient = get<LegacyApiClient>()
-			when (imageType) {
-				ImageType.BANNER -> ImageUtils.getBannerImageUrl(baseItem, apiClient, maxHeight)
-				ImageType.THUMB -> ImageUtils.getThumbImageUrl(baseItem, apiClient, maxHeight)
-				else -> getPrimaryImageUrl(context, maxHeight)
+			val seriesId = baseItem?.seriesId
+			val seriesPrimaryImageTag = baseItem?.seriesPrimaryImageTag
+
+			when {
+				preferSeriesPoster && seriesId != null && seriesPrimaryImageTag != null -> {
+					ImageUtils.getImageUrl(seriesId.toString(), org.jellyfin.apiclient.model.entities.ImageType.Primary, seriesPrimaryImageTag)
+				}
+
+				imageType == ImageType.BANNER -> ImageUtils.getBannerImageUrl(baseItem, apiClient, fillWidth, fillHeight)
+				imageType == ImageType.THUMB -> ImageUtils.getThumbImageUrl(baseItem, apiClient, fillWidth, fillHeight)
+				else -> getPrimaryImageUrl(context, fillHeight)
 			}
 		}
-		else -> getPrimaryImageUrl(context, maxHeight)
+
+		else -> getPrimaryImageUrl(context, fillHeight)
 	}
 
-	fun getPrimaryImageUrl(context: Context, maxHeight: Int) = when (baseRowType) {
+	fun getPrimaryImageUrl(context: Context, fillHeight: Int) = when (baseRowType) {
 		BaseRowType.BaseItem,
 		BaseRowType.LiveTvProgram,
-		BaseRowType.LiveTvRecording -> ImageUtils.getPrimaryImageUrl(baseItem!!, preferParentThumb, maxHeight)
-		BaseRowType.Person -> ImageUtils.getPrimaryImageUrl(basePerson!!, maxHeight)
+		BaseRowType.LiveTvRecording -> ImageUtils.getPrimaryImageUrl(baseItem!!, preferParentThumb, null, fillHeight)
+
+		BaseRowType.Person -> ImageUtils.getPrimaryImageUrl(basePerson!!, fillHeight)
 		BaseRowType.Chapter -> chapterInfo?.imagePath
 		BaseRowType.LiveTvChannel -> ImageUtils.getPrimaryImageUrl(baseItem!!)
-		BaseRowType.GridButton -> ImageUtils.getResourceUrl(context, gridButton!!.imageRes)
+		BaseRowType.GridButton -> gridButton?.imageRes?.let { ImageUtils.getResourceUrl(context, it) }
 		BaseRowType.SeriesTimer -> ImageUtils.getResourceUrl(context, R.drawable.tile_land_series_timer)
-		BaseRowType.SearchHint -> when {
-			!searchHint?.primaryImageTag.isNullOrBlank() -> ImageUtils.getImageUrl(searchHint!!.itemId.toString(), org.jellyfin.apiclient.model.entities.ImageType.Primary, searchHint.primaryImageTag!!)
-			!searchHint?.thumbImageItemId.isNullOrBlank() -> ImageUtils.getImageUrl(searchHint!!.thumbImageItemId!!, org.jellyfin.apiclient.model.entities.ImageType.Thumb, searchHint.thumbImageTag!!)
-			else -> null
-		}
 	}
 
 	fun getBaseItemType() = baseItem?.type
@@ -197,12 +205,12 @@ open class BaseRowItem protected constructor(
 		BaseRowType.BaseItem,
 		BaseRowType.LiveTvProgram,
 		BaseRowType.LiveTvRecording -> baseItem?.getFullName(context)
+
 		BaseRowType.Person -> basePerson?.name
 		BaseRowType.Chapter -> chapterInfo?.name
 		BaseRowType.LiveTvChannel -> baseItem?.name
 		BaseRowType.GridButton -> gridButton?.text
 		BaseRowType.SeriesTimer -> seriesTimerInfo?.name
-		BaseRowType.SearchHint -> listOfNotNull(searchHint?.series, searchHint?.name).joinToString(" - ")
 	}
 
 	fun getName(context: Context) = when (baseRowType) {
@@ -212,9 +220,9 @@ open class BaseRowItem protected constructor(
 			BaseItemKind.AUDIO -> getFullName(context)
 			else -> baseItem?.name
 		}
+
 		BaseRowType.Person -> basePerson?.name
 		BaseRowType.Chapter -> chapterInfo?.name
-		BaseRowType.SearchHint -> searchHint?.name
 		BaseRowType.LiveTvChannel -> baseItem?.name
 		BaseRowType.GridButton -> gridButton?.text
 		BaseRowType.SeriesTimer -> seriesTimerInfo?.name
@@ -225,17 +233,17 @@ open class BaseRowItem protected constructor(
 		BaseRowType.LiveTvProgram,
 		BaseRowType.LiveTvChannel,
 		BaseRowType.LiveTvRecording -> baseItem?.id.toString()
+
 		BaseRowType.Person -> basePerson?.id?.toString()
 		BaseRowType.Chapter -> chapterInfo?.itemId?.toString()
 		BaseRowType.GridButton -> null
-		BaseRowType.SearchHint -> searchHint?.itemId?.toString()
 		BaseRowType.SeriesTimer -> seriesTimerInfo?.id
 	}
 
 	fun getSubText(context: Context) = when (baseRowType) {
 		BaseRowType.BaseItem -> baseItem?.getSubName(context)
 		BaseRowType.Person -> basePerson?.role
-		BaseRowType.Chapter -> chapterInfo?.startPositionTicks?.div(10000)?.let(TimeUtils::formatMillis)
+		BaseRowType.Chapter -> chapterInfo?.startPositionTicks?.ticks?.inWholeMilliseconds?.let(TimeUtils::formatMillis)
 		BaseRowType.LiveTvChannel -> baseItem?.number
 		BaseRowType.LiveTvProgram -> baseItem?.episodeTitle ?: baseItem?.channelName
 		BaseRowType.LiveTvRecording -> {
@@ -254,13 +262,14 @@ open class BaseRowItem protected constructor(
 
 			"$title $timestamp"
 		}
-		BaseRowType.SearchHint -> searchHint?.type
+
 		BaseRowType.SeriesTimer -> {
 			val channelName = if (seriesTimerInfo?.recordAnyChannel == true) "All Channels"
 			else seriesTimerInfo?.channelName
 
 			listOfNotNull(channelName, seriesTimerInfo?.dayPattern).joinToString(" ")
 		}
+
 		BaseRowType.GridButton -> ""
 	}
 
@@ -268,28 +277,16 @@ open class BaseRowItem protected constructor(
 		BaseRowType.BaseItem,
 		BaseRowType.LiveTvRecording,
 		BaseRowType.LiveTvProgram -> baseItem?.overview
+
 		BaseRowType.SeriesTimer -> seriesTimerInfo?.asSdk()?.getSeriesOverview(context)
 		else -> null
 	}.orEmpty()
 
-	fun getRuntimeTicks() = when (baseRowType) {
-		BaseRowType.LiveTvRecording,
-		BaseRowType.BaseItem -> baseItem?.runTimeTicks ?: 0
-		BaseRowType.LiveTvProgram -> {
-			val start = baseItem?.startDate
-			val end = baseItem?.endDate
-
-			if (start != null && end != null) (start.until(end, ChronoUnit.MILLIS)) * 10000
-			else 0
-		}
-		else -> 0
-	}
-
 	fun getChildCountStr(): String? {
 		// Playlist
 		if (baseItem?.type == BaseItemKind.PLAYLIST) {
-			val childCount = baseItem?.cumulativeRunTimeTicks?.let {
-				TimeUtils.formatMillis(it / 10000)
+			val childCount = baseItem?.cumulativeRunTimeTicks?.ticks?.inWholeMilliseconds?.let {
+				TimeUtils.formatMillis(it)
 			}
 			if (childCount != null) return childCount
 		}
@@ -311,25 +308,29 @@ open class BaseRowItem protected constructor(
 					baseItem!!.criticRating!! > 59f -> R.drawable.ic_rt_fresh
 					else -> R.drawable.ic_rt_rotten
 				}
+
 				baseItem?.type == BaseItemKind.PROGRAM && baseItem!!.timerId != null -> when {
 					baseItem!!.seriesTimerId != null -> R.drawable.ic_record_series_red
 					else -> R.drawable.ic_record_red
 				}
+
 				else -> R.drawable.blank10x10
 			}
+
 			BaseRowType.Person,
 			BaseRowType.LiveTvProgram -> when {
 				baseItem?.seriesTimerId != null -> R.drawable.ic_record_series_red
 				baseItem?.timerId != null -> R.drawable.ic_record_red
 				else -> R.drawable.blank10x10
 			}
+
 			else -> R.drawable.blank10x10
 		}.let { ContextCompat.getDrawable(context, it) }
 	}
 
 	@JvmOverloads
 	fun refresh(
-		outerResponse: EmptyLifecycleAwareResponse,
+		outerResponse: LifecycleAwareResponse<org.jellyfin.sdk.model.api.BaseItemDto?>,
 		scope: CoroutineScope = ProcessLifecycleOwner.get().lifecycleScope,
 	) {
 		if (baseRowType == BaseRowType.BaseItem) {
@@ -342,11 +343,16 @@ open class BaseRowItem protected constructor(
 			}
 
 			scope.launch(Dispatchers.IO) {
-				val response by api.userLibraryApi.getItem(itemId = id.toUUID())
-				baseItem = response
+				baseItem = try {
+					api.userLibraryApi.getItem(itemId = id.toUUID()).content
+				} catch (err: ApiClientException) {
+					Timber.e(err, "Failed to refresh item")
+					// TODO Only set to null when returned status is 404 (requires Jellyfin 10.9>=)
+					null
+				}
 
 				if (outerResponse.active) withContext(Dispatchers.Main) {
-					outerResponse.onResponse()
+					outerResponse.onResponse(baseItem)
 				}
 			}
 		}

@@ -6,22 +6,26 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.jellyfin.androidtv.JellyfinApplication
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.repository.SessionRepository
 import org.jellyfin.androidtv.auth.repository.SessionRepositoryState
 import org.jellyfin.androidtv.auth.repository.UserRepository
-import org.jellyfin.androidtv.data.service.BackgroundService
+import org.jellyfin.androidtv.databinding.ActivityMainBinding
+import org.jellyfin.androidtv.ui.background.AppBackground
 import org.jellyfin.androidtv.ui.browsing.MainActivity
 import org.jellyfin.androidtv.ui.itemhandling.ItemLauncher
 import org.jellyfin.androidtv.ui.navigation.Destinations
@@ -40,7 +44,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import java.util.UUID
 
-class StartupActivity : FragmentActivity(R.layout.fragment_content_view) {
+class StartupActivity : FragmentActivity() {
 	companion object {
 		const val EXTRA_ITEM_ID = "ItemId"
 		const val EXTRA_ITEM_IS_USER_VIEW = "ItemIsUserView"
@@ -52,8 +56,9 @@ class StartupActivity : FragmentActivity(R.layout.fragment_content_view) {
 	private val mediaManager: MediaManager by inject()
 	private val sessionRepository: SessionRepository by inject()
 	private val userRepository: UserRepository by inject()
-	private val backgroundService: BackgroundService by inject()
 	private val navigationRepository: NavigationRepository by inject()
+
+	private lateinit var binding: ActivityMainBinding
 
 	private val networkPermissionsRequester = registerForActivityResult(
 		ActivityResultContracts.RequestMultiplePermissions()
@@ -74,7 +79,10 @@ class StartupActivity : FragmentActivity(R.layout.fragment_content_view) {
 
 		super.onCreate(savedInstanceState)
 
-		backgroundService.attach(this)
+		binding = ActivityMainBinding.inflate(layoutInflater)
+		binding.background.setContent { AppBackground() }
+		binding.screensaver.isVisible = false
+		setContentView(binding.root)
 
 		if (!intent.getBooleanExtra(EXTRA_HIDE_SPLASH, false)) showSplash()
 
@@ -88,32 +96,31 @@ class StartupActivity : FragmentActivity(R.layout.fragment_content_view) {
 		applyTheme()
 	}
 
-	private fun onPermissionsGranted() = lifecycleScope.launch {
-		lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-			sessionRepository.state.filter { it == SessionRepositoryState.READY }.collect {
-				val session = sessionRepository.currentSession.value
-				if (session != null) {
-					Timber.i("Found a session in the session repository, waiting for the currentUser in the application class.")
+	private fun onPermissionsGranted() = sessionRepository.state
+		.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+		.filter { it == SessionRepositoryState.READY }
+		.onEach {
+			val session = sessionRepository.currentSession.value
+			if (session != null) {
+				Timber.i("Found a session in the session repository, waiting for the currentUser in the application class.")
 
-					showSplash()
+				showSplash()
 
-					val currentUser = userRepository.currentUser.first { it != null }
-					Timber.i("CurrentUser changed to ${currentUser?.id} while waiting for startup.")
+				val currentUser = userRepository.currentUser.first { it != null }
+				Timber.i("CurrentUser changed to ${currentUser?.id} while waiting for startup.")
 
-					lifecycleScope.launch {
-						openNextActivity()
-					}
-				} else {
-					// Clear audio queue in case left over from last run
-					mediaManager.clearAudioQueue()
-
-					val server = startupViewModel.getLastServer()
-					if (server != null) showServer(server.id)
-					else showServerSelection()
+				lifecycleScope.launch {
+					openNextActivity()
 				}
+			} else {
+				// Clear audio queue in case left over from last run
+				mediaManager.clearAudioQueue()
+
+				val server = startupViewModel.getLastServer()
+				if (server != null) showServer(server.id)
+				else showServerSelection()
 			}
-		}
-	}
+		}.launchIn(lifecycleScope)
 
 	private suspend fun openNextActivity() {
 		val itemId = when {

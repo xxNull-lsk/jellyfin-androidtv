@@ -31,7 +31,6 @@ import org.jellyfin.androidtv.util.TimeUtils;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.androidtv.util.apiclient.ReportingHelper;
 import org.jellyfin.androidtv.util.apiclient.StreamHelper;
-import org.jellyfin.androidtv.util.profile.BaseProfile;
 import org.jellyfin.androidtv.util.profile.ExoPlayerProfile;
 import org.jellyfin.androidtv.util.profile.LibVlcProfile;
 import org.jellyfin.androidtv.util.sdk.ModelUtils;
@@ -302,7 +301,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
             mPlaybackState = PlaybackState.ERROR;
             if (mFragment != null) {
                 Utils.showToast(mFragment.getContext(), mFragment.getString(R.string.too_many_errors));
-                mFragment.finish();
+                mFragment.closePlayer();
             }
         }
     }
@@ -480,7 +479,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
                     Timber.d("item is null - aborting play");
                     if (mFragment != null) {
                         Utils.showToast(mFragment.getContext(), mFragment.getString(R.string.msg_cannot_play));
-                        mFragment.requireActivity().finish();
+                        mFragment.closePlayer();
                     }
                     return;
                 }
@@ -500,7 +499,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
                                 .setNegativeButton(R.string.lbl_no, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        mFragment.requireActivity().finish();
+                                        mFragment.closePlayer();
                                     }
                                 })
                                 .create()
@@ -512,7 +511,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
                                 .setPositiveButton(R.string.lbl_ok, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        mFragment.requireActivity().finish();
+                                        mFragment.closePlayer();
                                     }
                                 })
                                 .create()
@@ -567,18 +566,11 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         internalOptions.setMaxAudioChannels(Utils.downMixAudio(mFragment.getContext()) ? 2 : null); //have to downmix at server
         internalOptions.setSubtitleStreamIndex(forcedSubtitleIndex);
         internalOptions.setMediaSourceId(forcedSubtitleIndex != null ? getCurrentMediaSource().getId() : null);
-        DeviceProfile internalProfile = new BaseProfile();
-        if (DeviceUtils.is60() || userPreferences.getValue().get(UserPreferences.Companion.getAc3Enabled())) {
-            internalProfile = new ExoPlayerProfile(
-                    mFragment.getContext(),
-                    isLiveTv,
-                    userPreferences.getValue().get(UserPreferences.Companion.getLiveTvDirectPlayEnabled()),
-                    userPreferences.getValue().get(UserPreferences.Companion.getAc3Enabled())
-            );
-            Timber.i("*** Using extended Exoplayer profile options");
-        } else {
-            Timber.i("*** Using default android profile");
-        }
+        DeviceProfile internalProfile = new ExoPlayerProfile(
+                mFragment.getContext(),
+                isLiveTv && !userPreferences.getValue().get(UserPreferences.Companion.getLiveTvDirectPlayEnabled()),
+                userPreferences.getValue().get(UserPreferences.Companion.getAc3Enabled())
+        );
         internalOptions.setProfile(internalProfile);
         return internalOptions;
     }
@@ -760,13 +752,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         } else {
             Utils.showToast(mFragment.getContext(), mFragment.getString(R.string.msg_cannot_play));
         }
-        // give the user a second to read the error message
-        try {
-            Thread.sleep(750);
-        } catch (InterruptedException e) {
-            Timber.e(e);
-        }
-        if (mFragment != null) mFragment.finish();
+        if (mFragment != null) mFragment.closePlayer();
     }
 
     private void startItem(org.jellyfin.sdk.model.api.BaseItemDto item, long position, StreamInfo response) {
@@ -1022,9 +1008,17 @@ public class PlaybackController implements PlaybackControllerNotifiable {
                         mCurrentOptions.setSubtitleStreamIndex(index);
                         mDefaultSubIndex = index;
                     }
-                    break;
+                } else {
+                    if (!mVideoManager.setExoPlayerTrack(index, MediaStreamType.SUBTITLE, getCurrentlyPlayingItem().getMediaStreams())) {
+                        // error selecting internal subs
+                        if (mFragment != null)
+                            Utils.showToast(mFragment.getContext(), mFragment.getString(R.string.msg_unable_load_subs));
+                    } else {
+                        mCurrentOptions.setSubtitleStreamIndex(index);
+                        mDefaultSubIndex = index;
+                    }
                 }
-                // not using vlc - fall through to external handling
+                break;
             case External:
                 if (mFragment != null) mFragment.showSubLoadingMsg(true);
 
@@ -1113,13 +1107,8 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         stopReportLoop();
         if (mPlaybackState != PlaybackState.IDLE && mPlaybackState != PlaybackState.UNDEFINED) {
             mPlaybackState = PlaybackState.IDLE;
+
             if (mVideoManager != null && mVideoManager.isPlaying()) mVideoManager.stopPlayback();
-            //give it a just a beat to actually stop - this keeps it from re-requesting the stream after we tell the server we've stopped
-            try {
-                Thread.sleep(150);
-            } catch (InterruptedException e) {
-                Timber.e(e);
-            }
             Long mbPos = mCurrentPosition * 10000;
             ReportingHelper.reportStopped(getCurrentlyPlayingItem(), getCurrentStreamInfo(), mbPos);
             clearPlaybackSessionOptions();
@@ -1135,7 +1124,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
     }
 
     public void endPlayback(Boolean closeActivity) {
-        if (closeActivity) mFragment.getActivity().finish();
+        if (closeActivity && mFragment != null) mFragment.closePlayer();
         stop();
         if (mVideoManager != null)
             mVideoManager.destroy();
@@ -1283,7 +1272,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         currentSkipPos = 0;
     };
 
-    public void skip(int msec) {
+    private void skip(int msec) {
         if (hasInitializedVideoManager() && (isPlaying() || isPaused()) && spinnerOff && mVideoManager.getCurrentPosition() > 0) { //guard against skipping before playback has truly begun
             mHandler.removeCallbacks(skipRunnable);
             refreshCurrentPosition();
@@ -1427,7 +1416,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
             spinnerOff = false;
 
             // Show "Next Up" fragment
-            if (mFragment != null) mFragment.showNextUp(nextItem.getId().toString());
+            if (mFragment != null) mFragment.showNextUp(nextItem.getId());
             endPlayback();
         } else {
             next();

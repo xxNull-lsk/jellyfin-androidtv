@@ -1,7 +1,6 @@
 plugins {
 	id("com.android.application")
 	kotlin("android")
-	alias(libs.plugins.kotlin.ksp)
 	alias(libs.plugins.kotlin.serialization)
 	alias(libs.plugins.aboutlibraries)
 }
@@ -11,7 +10,7 @@ apply("baselineWorkaround.gradle")
 
 android {
 	namespace = "org.jellyfin.androidtv"
-	compileSdk = 33
+	compileSdk = 34
 
 	defaultConfig {
 		minSdk = 21
@@ -25,6 +24,7 @@ android {
 	}
 
 	buildFeatures {
+		buildConfig = true
 		viewBinding = true
 		compose = true
 	}
@@ -139,8 +139,10 @@ dependencies {
 	implementation(libs.bundles.koin)
 
 	// Media players
-	implementation(libs.exoplayer)
-	implementation(libs.jellyfin.exoplayer.ffmpegextension)
+	implementation(libs.androidx.media3.exoplayer)
+	implementation(libs.androidx.media3.exoplayer.hls)
+	implementation(libs.androidx.media3.ui)
+	implementation(libs.jellyfin.androidx.media3.ffmpeg.decoder)
 	implementation(libs.libvlc)
 
 	// Markdown
@@ -148,8 +150,7 @@ dependencies {
 
 	// Image utility
 	implementation(libs.blurhash)
-	implementation(libs.glide.core)
-	ksp(libs.glide.ksp)
+	implementation(libs.bundles.coil)
 
 	// Crash Reporting
 	implementation(libs.bundles.acra)

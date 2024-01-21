@@ -54,7 +54,6 @@
     <string name="auto_sign_in">യാന്ത്രിക പ്രവേശനം</string>
     <string name="lbl_use_series_thumbnails_description">എപ്പിസോഡുകൾ പ്രദർശിപ്പിക്കുമ്പോൾ സീരീസ് ലഘുചിത്രങ്ങൾ ഉപയോഗിക്കുക</string>
     <string name="lbl_use_series_thumbnails">സീരീസ് ലഘുചിത്രങ്ങൾ തിരഞ്ഞെടുക്കുക</string>
-    <string name="lbl_episode_marks">എപ്പിസോഡുകളിൽ മാത്രം</string>
     <string name="lbl_hide_unwatched_count">കാണാത്ത എണ്ണം മറയ്‌ക്കുക</string>
     <string name="pref_watched_indicator">കണ്ട സൂചകങ്ങൾ കാണിക്കുക</string>
     <string name="login_help_description">കണക്റ്റുചെയ്യാൻ ജെല്ലിഫിന് ഒരു സെർവർ ആവശ്യമാണ്. Docs.jellyfin.org- ലെ ഞങ്ങളുടെ ഡോക്യുമെന്റേഷൻ സന്ദർശിക്കുക അല്ലെങ്കിൽ ജെല്ലിഫിൻ ഉപയോഗിച്ച് ആരംഭിക്കുന്നതിന് QR കോഡ് സ്കാൻ ചെയ്യുക.</string>
@@ -246,7 +245,6 @@
     <string name="lbl_season_number">S%1$d</string>
     <string name="no_user_warning">ഞങ്ങൾക്ക് ഒരു ഉപയോക്താക്കളെയും കണ്ടെത്താൻ കഴിഞ്ഞില്ല!
 \n\"ഉപയോക്താവ് ചേർക്കുക\" ബട്ടൺ അമർത്തി ഒരു പുതിയ ഉപയോക്താവിനെ ചേർക്കുക.</string>
-    <string name="server_unsupported">സെർവർ അപ്‌ഡേറ്റുചെയ്യേണ്ടതുണ്ട്. നിലവിലെ പതിപ്പ് %1$s ആണെങ്കിലും അപ്ലിക്കേഷന് %2$s അല്ലെങ്കിൽ പുതിയത് ആവശ്യമാണ്</string>
     <string name="lbl_user_server">%2$s ന് %1$s</string>
     <string name="lbl_user_last_used">%2$s ന് %1$s ൽ അവസാനമായി ഉപയോഗിച്ചു</string>
     <string name="lbl_similar_items_library">നിങ്ങളുടെ ലൈബ്രറിയിലെ സമാന ഇനങ്ങൾ</string>
@@ -320,7 +318,6 @@
     <string name="lbl_play">പ്ലേ ചെയ്യുക</string>
     <string name="lbl_shuffle_all">എല്ലാം ഇളക്കുക</string>
     <string name="lbl_play_all">എല്ലാം പ്രവർത്തിപ്പിക്കുക</string>
-    <string name="lbl_because_you_watched">"കാരണം നിങ്ങൾ കണ്ടു "</string>
     <string name="lbl_other">മറ്റുള്ളവ</string>
     <string name="lbl_tv_series">TV പരമ്പര</string>
     <string name="lbl_movies">സിനിമകൾ</string>

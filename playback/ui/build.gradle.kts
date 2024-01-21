@@ -5,11 +5,10 @@ plugins {
 
 android {
 	namespace = "org.jellyfin.playback.ui"
-	compileSdk = 33
+	compileSdk = 34
 
 	defaultConfig {
 		minSdk = 21
-		targetSdk = 33
 	}
 
 	buildFeatures {
@@ -45,7 +44,7 @@ dependencies {
 	implementation(libs.androidx.appcompat)
 	implementation(libs.androidx.constraintlayout)
 	implementation(libs.bundles.androidx.lifecycle)
-	implementation(libs.androidx.media2.session)
+	implementation(libs.androidx.media3.session)
 
 	// Dependency Injection
 	implementation(libs.bundles.koin)

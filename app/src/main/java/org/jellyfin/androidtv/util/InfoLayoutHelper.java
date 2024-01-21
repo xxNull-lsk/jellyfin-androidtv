@@ -24,6 +24,8 @@ import org.jellyfin.sdk.model.api.SeriesStatus;
 import org.koin.java.KoinJavaComponent;
 
 import java.text.NumberFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -46,16 +48,20 @@ public class InfoLayoutHelper {
         }
     }
 
-    public static void addInfoRow(Context context, BaseItemDto item, LinearLayout layout, boolean includeRuntime, boolean includeEndTime) {
+    public static void addInfoRow(Context context, BaseItemDto item, int mediaSourceIndex, LinearLayout layout, boolean includeRuntime, boolean includeEndTime) {
         layout.removeAllViews();
         if (item.getId() != null) {
-            addInfoRow(context, item, layout, includeRuntime, includeEndTime, StreamHelper.getFirstAudioStream(item));
+            addInfoRow(context, item, mediaSourceIndex, layout, includeRuntime, includeEndTime, StreamHelper.getFirstAudioStream(item));
         }else{
             addProgramChannel(context, item, layout);
         }
     }
 
-    public static void addInfoRow(Context context, BaseItemDto item, LinearLayout layout, boolean includeRuntime, boolean includeEndTime, MediaStream audioStream) {
+    public static void addInfoRow(Context context, BaseItemDto item, LinearLayout layout, boolean includeRuntime, boolean includeEndTime) {
+        addInfoRow(context, item, 0, layout, includeRuntime, includeEndTime);
+    }
+
+    public static void addInfoRow(Context context, BaseItemDto item, int mediaSourceIndex, LinearLayout layout, boolean includeRuntime, boolean includeEndTime, MediaStream audioStream) {
         RatingType ratingType = KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getDefaultRatingType());
         if (ratingType != RatingType.RATING_HIDDEN) {
             addCriticInfo(context, item, layout);
@@ -100,7 +106,7 @@ public class InfoLayoutHelper {
         }
         if (includeRuntime) addRuntime(context, item, layout, includeEndTime);
         addSeriesStatus(context, item, layout);
-        addRatingAndRes(context, item, layout);
+        addRatingAndRes(context, item, mediaSourceIndex, layout);
         addMediaDetails(context, audioStream, layout);
     }
 
@@ -176,11 +182,11 @@ public class InfoLayoutHelper {
             addBlockText(context, layout, context.getString(R.string.lbl_new), 12, Color.GRAY, R.drawable.dark_green_gradient);
             addSpacer(context, layout, "  ");
         } else if (Utils.isTrue(item.isSeries()) && !Utils.isTrue(item.isNews())) {
-            addBlockText(context, layout, context.getString(R.string.lbl_repeat), 12, Color.GRAY, R.color.lb_default_brand_color);
+            addBlockText(context, layout, context.getString(R.string.lbl_repeat), 12, Color.GRAY, androidx.leanback.R.color.lb_default_brand_color);
             addSpacer(context, layout, "  ");
         }
         if (Utils.isTrue(item.isLive())) {
-            addBlockText(context, layout, context.getString(R.string.lbl_live), 12, Color.GRAY, R.color.lb_default_brand_color);
+            addBlockText(context, layout, context.getString(R.string.lbl_live), 12, Color.GRAY, androidx.leanback.R.color.lb_default_brand_color);
             addSpacer(context, layout, "  ");
 
         }
@@ -311,7 +317,7 @@ public class InfoLayoutHelper {
                 break;
             default:
                 if (item.getPremiereDate() != null) {
-                    date.setText(DateFormat.getMediumDateFormat(context).format(TimeUtils.getDate(item.getPremiereDate())));
+                    date.setText(item.getPremiereDate().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)));
                     layout.addView(date);
                     addSpacer(context, layout, "  ");
                 } else if (item.getProductionYear() != null && item.getProductionYear() > 0) {
@@ -325,20 +331,29 @@ public class InfoLayoutHelper {
 
     }
 
-    private static void addRatingAndRes(Context context, BaseItemDto item, LinearLayout layout) {
+    private static void addRatingAndRes(Context context, BaseItemDto item, int mediaSourceIndex, LinearLayout layout) {
         if (item.getOfficialRating() != null && !item.getOfficialRating().equals("0")) {
             addBlockText(context, layout, item.getOfficialRating());
             addSpacer(context, layout, "  ");
         }
-        if (item.getMediaStreams() != null && item.getMediaStreams().size() > 0 && item.getMediaStreams().get(0).getWidth() != null && item.getMediaStreams().get(0).getHeight() != null) {
-            int width = item.getMediaStreams().get(0).getWidth();
-            int height = item.getMediaStreams().get(0).getHeight();
+
+        if (Utils.isTrue(item.getHasSubtitles())) {
+            addBlockText(context, layout, "CC");
+            addSpacer(context, layout, "  ");
+        }
+
+        MediaStream videoStream = StreamHelper.getFirstVideoStream(item, mediaSourceIndex);
+
+        if (videoStream != null && videoStream.getWidth() != null && videoStream.getHeight() != null) {
+            int width = videoStream.getWidth();
+            int height = videoStream.getHeight();
+            Boolean isInterlaced = videoStream.isInterlaced();
             if (width <= 960 && height <= 576) {
                 addBlockText(context, layout, context.getString(R.string.lbl_sd));
             } else if (width <= 1280 && height <= 962) {
-                addBlockText(context, layout, "720");
+                addBlockText(context, layout, "720" + (isInterlaced == null || !isInterlaced ? "p" : "i"));
             } else if (width <= 1920 && height <= 1440) {
-                addBlockText(context, layout, "1080");
+                addBlockText(context, layout, "1080" + (isInterlaced == null || !isInterlaced ? "p" : "i"));
             } else if (width <= 4096 && height <= 3072) {
                 addBlockText(context, layout, "4K");
             } else {
@@ -347,13 +362,7 @@ public class InfoLayoutHelper {
 
             addSpacer(context, layout, " ");
 
-            addVideoCodecDetails(context, layout, item.getMediaStreams().get(0));
-
-        }
-        if (Utils.isTrue(item.getHasSubtitles())) {
-            addBlockText(context, layout, "CC");
-            addSpacer(context, layout, "  ");
-
+            addVideoCodecDetails(context, layout, videoStream);
         }
     }
 
@@ -373,16 +382,41 @@ public class InfoLayoutHelper {
                 addBlockText(context, layout, codec);
                 addSpacer(context, layout, "  ");
             }
+            if (stream.getVideoDoViTitle() != null && stream.getVideoDoViTitle().trim().length() > 0) {
+                addBlockText(context, layout, "VISION");
+                addSpacer(context, layout, "  ");
+            } else if (stream.getVideoRangeType() != null && !stream.getVideoRangeType().equals("SDR")) {
+                addBlockText(context, layout, stream.getVideoRangeType().toUpperCase());
+                addSpacer(context, layout, "  ");
+            }
         }
     }
 
     private static void addMediaDetails(Context context, MediaStream stream, LinearLayout layout) {
 
         if (stream != null) {
-            if (stream.getCodec() != null && stream.getCodec().trim().length() > 0) {
-                String codec = stream.getCodec().equals("dca") || stream.getCodec().equals("DCA") ? "DTS" : stream.getCodec().equals("ac3") || stream.getCodec().equals("AC3") ? "Dolby" : stream.getCodec().toUpperCase();
-                addBlockText(context, layout, codec);
+            if (stream.getProfile() != null && stream.getProfile().contains("Dolby Atmos")) {
+                addBlockText(context, layout, "ATMOS");
                 addSpacer(context, layout, " ");
+            } else if (stream.getProfile() != null && stream.getProfile().contains("DTS:X")) {
+                addBlockText(context, layout, "DTS:X");
+                addSpacer(context, layout, " ");
+            } else {
+                String codec = null;
+                if (stream.getProfile() != null && stream.getProfile().contains("DTS-HD")) {
+                    codec = "DTS-HD";
+                } else if (stream.getCodec() != null && stream.getCodec().trim().length() > 0) {
+                    switch (stream.getCodec().toLowerCase()) {
+                        case "dca": codec = "DTS"; break;
+                        case "eac3": codec = "DD+"; break;
+                        case "ac3": codec = "DD"; break;
+                        default: codec = stream.getCodec().toUpperCase();
+                    }
+                }
+                if (codec != null) {
+                    addBlockText(context, layout, codec);
+                    addSpacer(context, layout, " ");
+                }
             }
             if (stream.getChannelLayout() != null && stream.getChannelLayout().trim().length() > 0) {
                 addBlockText(context, layout, stream.getChannelLayout().toUpperCase());

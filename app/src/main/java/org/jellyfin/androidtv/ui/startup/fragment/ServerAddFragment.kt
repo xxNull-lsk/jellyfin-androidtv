@@ -11,7 +11,8 @@ import androidx.fragment.app.add
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.model.ConnectedState
 import org.jellyfin.androidtv.auth.model.ConnectingState
@@ -27,12 +28,13 @@ class ServerAddFragment : Fragment() {
 	}
 
 	private val startupViewModel: ServerAddViewModel by viewModel()
-	private lateinit var binding: FragmentServerAddBinding
+	private var _binding: FragmentServerAddBinding? = null
+	private val binding get() = _binding!!
 
 	private val serverAddressArgument get() = arguments?.getString(ARG_SERVER_ADDRESS)?.ifBlank { null }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		binding = FragmentServerAddBinding.inflate(inflater, container, false)
+		_binding = FragmentServerAddBinding.inflate(inflater, container, false)
 
 		with(binding.address) {
 			setOnEditorActionListener { _, actionId, _ ->
@@ -41,6 +43,7 @@ class ServerAddFragment : Fragment() {
 						submitAddress()
 						true
 					}
+
 					else -> false
 				}
 			}
@@ -64,43 +67,50 @@ class ServerAddFragment : Fragment() {
 			binding.address.requestFocus()
 		}
 
-		lifecycleScope.launch {
-			startupViewModel.state.collect { state ->
-				when (state) {
-					is ConnectingState -> {
-						// Disable form
-						binding.address.isEnabled = false
-						binding.confirm.isEnabled = false
-						// Update state text
-						binding.error.text = getString(R.string.server_connecting, state.address)
-					}
-					is UnableToConnectState -> {
-						// Enable form
-						binding.address.isEnabled = true
-						binding.confirm.isEnabled = true
-						// Update state text
-						binding.error.text = getString(
-							R.string.server_connection_failed_candidates,
-							state.addressCandidates
-								.map { "${it.key} - ${it.value.getSummary(requireContext())}" }
-								.joinToString(prefix = "\n", separator = "\n")
-						)
-					}
-					is ConnectedState -> parentFragmentManager.commit {
-						// Open server view
-						replace<StartupToolbarFragment>(R.id.content_view)
-						add<ServerFragment>(
-							R.id.content_view,
-							null,
-							bundleOf(
-								ServerFragment.ARG_SERVER_ID to state.id.toString()
-							)
-						)
-					}
-					null -> Unit
+		startupViewModel.state.onEach { state ->
+			when (state) {
+				is ConnectingState -> {
+					// Disable form
+					binding.address.isEnabled = false
+					binding.confirm.isEnabled = false
+					// Update state text
+					binding.error.text = getString(R.string.server_connecting, state.address)
 				}
+
+				is UnableToConnectState -> {
+					// Enable form
+					binding.address.isEnabled = true
+					binding.confirm.isEnabled = true
+					// Update state text
+					binding.error.text = getString(
+						R.string.server_connection_failed_candidates,
+						state.addressCandidates
+							.map { "${it.key} - ${it.value.getSummary(requireContext())}" }
+							.joinToString(prefix = "\n", separator = "\n")
+					)
+				}
+
+				is ConnectedState -> parentFragmentManager.commit {
+					// Open server view
+					replace<StartupToolbarFragment>(R.id.content_view)
+					add<ServerFragment>(
+						R.id.content_view,
+						null,
+						bundleOf(
+							ServerFragment.ARG_SERVER_ID to state.id.toString()
+						)
+					)
+				}
+
+				null -> Unit
 			}
-		}
+		}.launchIn(lifecycleScope)
+	}
+
+	override fun onDestroyView() {
+		super.onDestroyView()
+
+		_binding = null
 	}
 
 	private fun submitAddress() = when {

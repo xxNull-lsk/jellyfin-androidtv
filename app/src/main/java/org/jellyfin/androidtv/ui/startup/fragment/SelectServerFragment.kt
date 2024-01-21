@@ -5,6 +5,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Card
+import androidx.compose.material.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -15,6 +26,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.jellyfin.androidtv.BuildConfig
 import org.jellyfin.androidtv.R
@@ -23,6 +36,7 @@ import org.jellyfin.androidtv.auth.model.ConnectingState
 import org.jellyfin.androidtv.auth.model.Server
 import org.jellyfin.androidtv.auth.model.ServerAdditionState
 import org.jellyfin.androidtv.auth.model.UnableToConnectState
+import org.jellyfin.androidtv.data.repository.NotificationsRepository
 import org.jellyfin.androidtv.databinding.FragmentSelectServerBinding
 import org.jellyfin.androidtv.ui.ServerButtonView
 import org.jellyfin.androidtv.ui.SpacingItemDecoration
@@ -31,14 +45,16 @@ import org.jellyfin.androidtv.util.ListAdapter
 import org.jellyfin.androidtv.util.MenuBuilder
 import org.jellyfin.androidtv.util.getSummary
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.compose.rememberKoinInject
 
 class SelectServerFragment : Fragment() {
-	private lateinit var binding: FragmentSelectServerBinding
+	private var _binding: FragmentSelectServerBinding? = null
+	private val binding get() = _binding!!
 	private val startupViewModel: StartupViewModel by activityViewModel()
 
 	@Suppress("LongMethod")
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		binding = FragmentSelectServerBinding.inflate(inflater, container, false)
+		_binding = FragmentSelectServerBinding.inflate(inflater, container, false)
 
 		// Create spacing for recycler view of 8dp
 		@Suppress("MagicNumber")
@@ -76,37 +92,35 @@ class SelectServerFragment : Fragment() {
 		binding.discoveryServers.addItemDecoration(serverDivider)
 		val discoveryServerAdapter = ServerAdapter(
 			serverClickListener = { (_, server) ->
-				viewLifecycleOwner.lifecycleScope.launch {
-					startupViewModel.addServer(server.address).collect { state ->
-						if (state is ConnectedState) {
-							parentFragmentManager.commit {
-								replace<StartupToolbarFragment>(R.id.content_view)
-								add<ServerFragment>(
-									R.id.content_view,
-									null,
-									bundleOf(
-										ServerFragment.ARG_SERVER_ID to state.id.toString()
-									)
+				startupViewModel.addServer(server.address).onEach { state ->
+					if (state is ConnectedState) {
+						parentFragmentManager.commit {
+							replace<StartupToolbarFragment>(R.id.content_view)
+							add<ServerFragment>(
+								R.id.content_view,
+								null,
+								bundleOf(
+									ServerFragment.ARG_SERVER_ID to state.id.toString()
 								)
-							}
-						} else {
-							items = items.map {
-								if (it.server.id == server.id) StatefulServer(state, it.server)
-								else it
-							}
+							)
+						}
+					} else {
+						items = items.map {
+							if (it.server.id == server.id) StatefulServer(state, it.server)
+							else it
+						}
 
-							// Show error as toast
-							if (state is UnableToConnectState) {
-								Toast.makeText(requireContext(), getString(
-									R.string.server_connection_failed_candidates,
-									state.addressCandidates
-										.map { "${it.key} ${it.value.getSummary(requireContext())}" }
-										.joinToString(prefix = "\n", separator = "\n")
-								), Toast.LENGTH_LONG).show()
-							}
+						// Show error as toast
+						if (state is UnableToConnectState) {
+							Toast.makeText(requireContext(), getString(
+								R.string.server_connection_failed_candidates,
+								state.addressCandidates
+									.map { "${it.key} ${it.value.getSummary(requireContext())}" }
+									.joinToString(prefix = "\n", separator = "\n")
+							), Toast.LENGTH_LONG).show()
 						}
 					}
-				}
+				}.launchIn(lifecycleScope)
 			}
 		)
 		binding.discoveryServers.adapter = discoveryServerAdapter
@@ -117,32 +131,54 @@ class SelectServerFragment : Fragment() {
 				binding.discoveryServers.isVisible = true
 				binding.discoveryServers.isFocusable = false
 
-				launch {
-					startupViewModel.storedServers.collect { servers ->
-						storedServerAdapter.items = servers.map { StatefulServer(server = it) }
+				startupViewModel.storedServers.onEach { servers ->
+					storedServerAdapter.items = servers.map { StatefulServer(server = it) }
 
-						binding.storedServersTitle.isVisible = servers.isNotEmpty()
-						binding.storedServers.isVisible = servers.isNotEmpty()
-						binding.storedServers.isFocusable = servers.isNotEmpty()
-						binding.welcomeTitle.isVisible = servers.isEmpty()
-						binding.welcomeContent.isVisible = servers.isEmpty()
+					binding.storedServersTitle.isVisible = servers.isNotEmpty()
+					binding.storedServers.isVisible = servers.isNotEmpty()
+					binding.storedServers.isFocusable = servers.isNotEmpty()
+					binding.welcomeTitle.isVisible = servers.isEmpty()
+					binding.welcomeContent.isVisible = servers.isEmpty()
 
-						// Make sure focus is properly set when no servers exist
-						if (servers.isEmpty()) binding.enterServerAddress.requestFocus()
-					}
-				}
+					// Make sure focus is properly set when no servers exist
+					if (servers.isEmpty()) binding.enterServerAddress.requestFocus()
+				}.launchIn(this)
 
-				launch {
-					startupViewModel.discoveredServers.collect { servers ->
-						discoveryServerAdapter.items = servers.map { StatefulServer(server = it) }
+				startupViewModel.discoveredServers.onEach { servers ->
+					discoveryServerAdapter.items = servers.map { StatefulServer(server = it) }
 
-						binding.discoveryServers.isFocusable = servers.any()
-						binding.discoveryServers.isVisible = discoveryServerAdapter.itemCount > 0
-						binding.discoveryNoneFound.isVisible = discoveryServerAdapter.itemCount == 0
-					}
-				}
+					binding.discoveryServers.isFocusable = servers.any()
+					binding.discoveryServers.isVisible = discoveryServerAdapter.itemCount > 0
+					binding.discoveryNoneFound.isVisible = discoveryServerAdapter.itemCount == 0
+				}.launchIn(this)
 
 				binding.discoveryProgressIndicator.isVisible = false
+			}
+		}
+
+		// Notifications
+		binding.notifications.setContent {
+			val notificationsRepository = rememberKoinInject<NotificationsRepository>()
+			val notifications by notificationsRepository.notifications.collectAsState()
+
+			Column(
+				verticalArrangement = Arrangement.spacedBy(5.dp)
+			) {
+				for (notification in notifications) {
+					if (!notification.public) continue
+
+					Card(
+						modifier = Modifier
+							.fillMaxWidth(),
+						backgroundColor = colorResource(id = R.color.lb_basic_card_info_bg_color),
+						contentColor = colorResource(id = R.color.white),
+					) {
+						Text(
+							text = notification.message,
+							modifier = Modifier.padding(10.dp)
+						)
+					}
+				}
 			}
 		}
 
@@ -162,6 +198,12 @@ class SelectServerFragment : Fragment() {
 		binding.root.requestFocus()
 
 		return binding.root
+	}
+
+	override fun onDestroyView() {
+		super.onDestroyView()
+
+		_binding = null
 	}
 
 	override fun onResume() {

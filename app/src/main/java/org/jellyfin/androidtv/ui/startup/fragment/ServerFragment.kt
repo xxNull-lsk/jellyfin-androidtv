@@ -15,9 +15,12 @@ import androidx.fragment.app.add
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.model.ApiClientErrorLoginState
@@ -53,7 +56,8 @@ class ServerFragment : Fragment() {
 	private val authenticationRepository: AuthenticationRepository by inject()
 	private val serverUserRepository: ServerUserRepository by inject()
 	private val backgroundService: BackgroundService by inject()
-	private lateinit var binding: FragmentServerBinding
+	private var _binding: FragmentServerBinding? = null
+	private val binding get() = _binding!!
 
 	private val serverIdArgument get() = arguments?.getString(ARG_SERVER_ID)?.ifBlank { null }?.toUUIDOrNull()
 
@@ -65,46 +69,47 @@ class ServerFragment : Fragment() {
 			return null
 		}
 
-		binding = FragmentServerBinding.inflate(inflater, container, false)
+		_binding = FragmentServerBinding.inflate(inflater, container, false)
 
 		val userAdapter = UserAdapter(requireContext(), server, startupViewModel, authenticationRepository, serverUserRepository)
 		userAdapter.onItemPressed = { user ->
-			lifecycleScope.launch {
-				startupViewModel.authenticate(server, user).collect { state ->
-					when (state) {
-						// Ignored states
-						AuthenticatingState -> Unit
-						AuthenticatedState -> Unit
-						// Actions
-						RequireSignInState -> navigateFragment<UserLoginFragment>(bundleOf(
-							UserLoginFragment.ARG_SERVER_ID to server.id.toString(),
-							UserLoginFragment.ARG_USERNAME to user.name,
-						))
-						// Errors
-						ServerUnavailableState,
-						is ApiClientErrorLoginState-> Toast.makeText(context, R.string.server_connection_failed, Toast.LENGTH_LONG).show()
-						is ServerVersionNotSupported -> Toast.makeText(
-							context,
-							getString(R.string.server_unsupported, state.server.version, ServerRepository.minimumServerVersion.toString()),
-							Toast.LENGTH_LONG
-						).show()
-					}
+			startupViewModel.authenticate(server, user).onEach { state ->
+				when (state) {
+					// Ignored states
+					AuthenticatingState -> Unit
+					AuthenticatedState -> Unit
+					// Actions
+					RequireSignInState -> navigateFragment<UserLoginFragment>(bundleOf(
+						UserLoginFragment.ARG_SERVER_ID to server.id.toString(),
+						UserLoginFragment.ARG_USERNAME to user.name,
+					))
+					// Errors
+					ServerUnavailableState,
+					is ApiClientErrorLoginState -> Toast.makeText(context, R.string.server_connection_failed, Toast.LENGTH_LONG).show()
+
+					is ServerVersionNotSupported -> Toast.makeText(
+						context,
+						getString(
+							R.string.server_issue_outdated_version,
+							state.server.version,
+							ServerRepository.recommendedServerVersion.toString()
+						),
+						Toast.LENGTH_LONG
+					).show()
 				}
-			}
+			}.launchIn(lifecycleScope)
 		}
 		binding.users.adapter = userAdapter
 
-		viewLifecycleOwner.lifecycleScope.launch {
-			viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-				startupViewModel.users.collect { users ->
-					userAdapter.items = users
+		startupViewModel.users
+			.flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+			.onEach { users ->
+				userAdapter.items = users
 
-					binding.users.isFocusable = users.any()
-					binding.noUsersWarning.isVisible = users.isEmpty()
-					binding.root.requestFocus()
-				}
-			}
-		}
+				binding.users.isFocusable = users.any()
+				binding.noUsersWarning.isVisible = users.isEmpty()
+				binding.root.requestFocus()
+			}.launchIn(viewLifecycleOwner.lifecycleScope)
 
 		startupViewModel.loadUsers(server)
 
@@ -118,6 +123,12 @@ class ServerFragment : Fragment() {
 		}
 
 		return binding.root
+	}
+
+	override fun onDestroyView() {
+		super.onDestroyView()
+
+		_binding = null
 	}
 
 	private fun onServerChange(server: Server) {
@@ -148,7 +159,7 @@ class ServerFragment : Fragment() {
 			binding.notification.text = getString(
 				R.string.server_unsupported_notification,
 				server.version,
-				ServerRepository.minimumServerVersion.toString(),
+				ServerRepository.recommendedServerVersion.toString(),
 			)
 		} else if (!server.setupCompleted) {
 			binding.notification.isVisible = true
@@ -211,7 +222,7 @@ class ServerFragment : Fragment() {
 			holder.cardView.title = user.name
 			holder.cardView.setImage(
 				url = startupViewModel.getUserImage(server, user),
-				placeholder = ContextCompat.getDrawable(context, R.drawable.tile_port_user)
+				placeholder = ContextCompat.getDrawable(context, R.drawable.tile_user)
 			)
 			holder.cardView.setPopupMenu {
 				// Logout button

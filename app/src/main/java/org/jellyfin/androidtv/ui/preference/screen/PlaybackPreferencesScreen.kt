@@ -182,7 +182,7 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 				setTitle(R.string.lbl_bitstream_ac3)
 				setContent(R.string.desc_bitstream_ac3)
 				bind(userPreferences, UserPreferences.ac3Enabled)
-				depends { userPreferences[UserPreferences.videoPlayer] != PreferredVideoPlayer.EXTERNAL && !DeviceUtils.is60() }
+				depends { userPreferences[UserPreferences.videoPlayer] != PreferredVideoPlayer.EXTERNAL }
 			}
 
 			checkbox {
@@ -201,6 +201,20 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 					override fun display(value: Int) = "${value}ms"
 				}
 				bind(userPreferences, UserPreferences.libVLCAudioDelay)
+			}
+		}
+
+		category {
+			setTitle(R.string.pref_music_cat)
+
+			checkbox {
+				setTitle(R.string.pref_music_rewrite_disable)
+				bind {
+					get { !userPreferences[UserPreferences.playbackRewriteAudioEnabled] }
+					set { value -> userPreferences[UserPreferences.playbackRewriteAudioEnabled] = !value }
+					default { !UserPreferences.playbackRewriteAudioEnabled.defaultValue }
+				}
+				setContent(R.string.pref_music_rewrite_enable_description)
 			}
 		}
 

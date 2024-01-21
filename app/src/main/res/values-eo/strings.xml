@@ -208,7 +208,6 @@
     <string name="user_picker_last_user_title">Plej lastatempe uzata</string>
     <string name="auto_sign_in">Aŭtomata ensaluto</string>
     <string name="lbl_use_series_thumbnails">Preferi seriajn avizojn</string>
-    <string name="lbl_episode_marks">Nur en epizodoj</string>
     <string name="lbl_hide_unwatched_count">Kaŝi nespektitan kalkulon</string>
     <string name="pref_watched_indicator">Montri spektindikilojn</string>
     <string name="enable_smart_view">Ebligi inteligentan ekranon</string>
@@ -243,7 +242,6 @@
     <string name="lbl_tune_to_channel">Ŝanĝi al kanalo</string>
     <string name="msg_no_playable_items">Neniuj ludeblaj aĵoj</string>
     <string name="lbl_play_first_unwatched">Ludi Unue Nespektiton</string>
-    <string name="lbl_because_you_watched">"Ĉar vi spektis "</string>
     <string name="pref_max_bitrate_title">Maksimuma elsendflua bitrapido</string>
     <string name="advanced_settings">Aldone</string>
     <string name="lbl_next_up_minimal">Sen avizo</string>
@@ -366,7 +364,6 @@
     <string name="lbl_starting_early_ending_after">Komencanta %1$s frue kaj Finonta %2$s poste Horaro</string>
     <string name="no_user_warning">Ni ne povis trovi ajnajn uzantojn!
 \nAldoni novan konton premante la butonon \"Aldoni konton\".</string>
-    <string name="server_unsupported">Servilo devas esti ĝisdatigita. Nuna versio estas %1$s sed la apo bezonas %2$s aŭ pli novan</string>
     <string name="welcome_content">Konekti al via servilo por komenci.</string>
     <string name="login_help_description">Jellyfin bezonas servilon por konektiĝi. Viziti nian dokumentaron ĉe docs.jellyfin.org aŭ skani la QR-kodon por komenci kun Jellyfin.</string>
     <string name="enable_smart_view_description">Inteligenta ekrano montras koncernajn aĵojn anstataŭ krado</string>
